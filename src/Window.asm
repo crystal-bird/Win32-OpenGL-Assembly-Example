@@ -357,6 +357,11 @@ function                            SetupMainWindow
                                     mov             rdx, rax
                                     call            wglMakeCurrent
 
+                                    ; ------------- [Enable VSync] ------------------------------------------
+
+                                    mov             rcx, 1
+                                    call            [FnPtr_wglSwapIntervalEXT]
+
                                     ; ------------- [Restore stack frame] -----------------------------------
 
                                     mov             rsp, rbp
