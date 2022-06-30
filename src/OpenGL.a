@@ -1,0 +1,2260 @@
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; OpenGL 4.6 Compatability Profile Setup.                                                               --
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; Assembler directives (NASM)                                                                           --
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+default                             rel
+
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; General Includes                                                                                      --
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+%include                            "Macros.i"
+%include                            "Externals.i"
+%include                            "WinConst.i"
+
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; Macros and defines                                                                                    --
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+%define __STR(&name) name
+
+%macro GLAPI 1
+    global FnPtr_%1
+    section .data
+    FnPtr_%1:   dq 0
+    section .rdata
+    Name_%1:    db __STR(%1), 0
+%endmacro
+
+%macro LOADGL 1
+    mov         rcx, Name_%1
+    call        LoadGLProc
+    mov         [FnPtr_%1], rax
+%endmacro
+
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; Readonly data section                                                                                 --
+;                                                                                                       --
+section                             .rdata
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+GLName:                             db "opengl32.dll", 0
+
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; Unitialized data section                                                                              --
+;                                                                                                       --
+section                             .bss
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+GLHandle:                           dq 0
+
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; Code section                                                                                          --
+;                                                                                                       --
+section                             .code
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+;
+;                                   Function:           LoadGLProc
+;                                   Description:        Load an OpenGL function from the registry.
+;
+;                                   Parameters:
+;                                       rcx     -       Pointer to a string that contains the name of the function
+;
+;                                   Returns:            A valid pointer to the function if successful, otherwise returns 0.
+;
+function                            LoadGLProc
+
+                                    ; ------------- [Setup stack frame] -------------------------------------
+
+                                    push            rbp
+                                    mov             rbp, rsp
+                                    sub             rsp, 32
+
+                                    ; ------------- [Save name string] --------------------------------------
+
+                                    mov             [rbp + 16], rcx
+
+                                    ; ------------- [Get function pointer from opengl32.dll] ----------------
+
+                                    mov             rcx, [GLHandle]
+                                    mov             rdx, [rbp + 16]
+                                    call            GetProcAddress
+
+                                    ; ------------- [Check if the function pointer is 0] --------------------
+
+                                    test            rax, rax
+                                    jnz             .Return
+
+                                    ; ------------- [Get function pointer from WGL] -------------------------
+
+                                    mov             rcx, [rbp + 16]
+                                    call            wglGetProcAddress
+
+.Return:\
+
+                                    ; ------------- [Restore stack frame] -----------------------------------
+
+                                    mov             rsp, rbp
+                                    pop             rbp
+
+                                    ; ------------- [Return] ------------------------------------------------
+
+                                    ret
+
+;
+;                                   Function:           LoadGL
+;                                   Description:        Load OpenGL 4.6 Compatability Profile
+;
+;                                   Parameters:         None
+;
+;                                   Returns:            None
+;
+function                            LoadGL
+
+                                    
+                                    ; ------------- [Setup stack frame] -------------------------------------
+
+                                    push            rbp
+                                    mov             rbp, rsp
+                                    sub             rsp, 32
+
+                                    ; ------------- [Load opengl32.dll] -------------------------------------
+
+                                    mov             rcx, GLName
+                                    call            LoadLibraryA
+                                    mov             [GLHandle], rax
+
+                                    ; ------------- [Load OpenGL] -------------------------------------------
+
+                                    LOADGL          glClearIndex
+                                    LOADGL          glClearColor
+                                    LOADGL          glClear
+                                    LOADGL          glIndexMask
+                                    LOADGL          glColorMask
+                                    LOADGL          glAlphaFunc
+                                    LOADGL          glBlendFunc
+                                    LOADGL          glLogicOp
+                                    LOADGL          glCullFace
+                                    LOADGL          glFrontFace
+                                    LOADGL          glPointSize
+                                    LOADGL          glLineWidth
+                                    LOADGL          glLineStipple
+                                    LOADGL          glPolygonMode
+                                    LOADGL          glPolygonOffset
+                                    LOADGL          glPolygonStipple
+                                    LOADGL          glGetPolygonStipple
+                                    LOADGL          glEdgeFlag
+                                    LOADGL          glEdgeFlagv
+                                    LOADGL          glScissor
+                                    LOADGL          glClipPlane
+                                    LOADGL          glGetClipPlane
+                                    LOADGL          glDrawBuffer
+                                    LOADGL          glReadBuffer
+                                    LOADGL          glEnable
+                                    LOADGL          glDisable
+                                    LOADGL          glIsEnabled
+                                    LOADGL          glEnableClientState
+                                    LOADGL          glDisableClientState
+                                    LOADGL          glGetBooleanv
+                                    LOADGL          glGetDoublev
+                                    LOADGL          glGetFloatv
+                                    LOADGL          glGetIntegerv
+                                    LOADGL          glPushAttrib
+                                    LOADGL          glPopAttrib
+                                    LOADGL          glPushClientAttrib
+                                    LOADGL          glPopClientAttrib
+                                    LOADGL          glRenderMode
+                                    LOADGL          glGetError
+                                    LOADGL          glGetString
+                                    LOADGL          glFinish
+                                    LOADGL          glFlush
+                                    LOADGL          glHint
+                                    LOADGL          glClearDepth
+                                    LOADGL          glDepthFunc
+                                    LOADGL          glDepthMask
+                                    LOADGL          glDepthRange
+                                    LOADGL          glClearAccum
+                                    LOADGL          glAccum
+                                    LOADGL          glMatrixMode
+                                    LOADGL          glOrtho
+                                    LOADGL          glFrustum
+                                    LOADGL          glViewport
+                                    LOADGL          glPushMatrix
+                                    LOADGL          glPopMatrix
+                                    LOADGL          glLoadIdentity
+                                    LOADGL          glLoadMatrixd
+                                    LOADGL          glLoadMatrixf
+                                    LOADGL          glMultMatrixd
+                                    LOADGL          glMultMatrixf
+                                    LOADGL          glRotated
+                                    LOADGL          glRotatef
+                                    LOADGL          glScaled
+                                    LOADGL          glScalef
+                                    LOADGL          glTranslated
+                                    LOADGL          glTranslatef
+                                    LOADGL          glIsList
+                                    LOADGL          glDeleteLists
+                                    LOADGL          glGenLists
+                                    LOADGL          glNewList
+                                    LOADGL          glEndList
+                                    LOADGL          glCallList
+                                    LOADGL          glCallLists
+                                    LOADGL          glListBase
+                                    LOADGL          glBegin
+                                    LOADGL          glEnd
+                                    LOADGL          glVertex2d
+                                    LOADGL          glVertex2f
+                                    LOADGL          glVertex2i
+                                    LOADGL          glVertex2s
+                                    LOADGL          glVertex3d
+                                    LOADGL          glVertex3f
+                                    LOADGL          glVertex3i
+                                    LOADGL          glVertex3s
+                                    LOADGL          glVertex4d
+                                    LOADGL          glVertex4f
+                                    LOADGL          glVertex4i
+                                    LOADGL          glVertex4s
+                                    LOADGL          glVertex2dv
+                                    LOADGL          glVertex2fv
+                                    LOADGL          glVertex2iv
+                                    LOADGL          glVertex2sv
+                                    LOADGL          glVertex3dv
+                                    LOADGL          glVertex3fv
+                                    LOADGL          glVertex3iv
+                                    LOADGL          glVertex3sv
+                                    LOADGL          glVertex4dv
+                                    LOADGL          glVertex4fv
+                                    LOADGL          glVertex4iv
+                                    LOADGL          glVertex4sv
+                                    LOADGL          glNormal3b
+                                    LOADGL          glNormal3d
+                                    LOADGL          glNormal3f
+                                    LOADGL          glNormal3i
+                                    LOADGL          glNormal3s
+                                    LOADGL          glNormal3bv
+                                    LOADGL          glNormal3dv
+                                    LOADGL          glNormal3fv
+                                    LOADGL          glNormal3iv
+                                    LOADGL          glNormal3sv
+                                    LOADGL          glIndexd
+                                    LOADGL          glIndexf
+                                    LOADGL          glIndexi
+                                    LOADGL          glIndexs
+                                    LOADGL          glIndexub
+                                    LOADGL          glIndexdv
+                                    LOADGL          glIndexfv
+                                    LOADGL          glIndexiv
+                                    LOADGL          glIndexsv
+                                    LOADGL          glIndexubv
+                                    LOADGL          glColor3b
+                                    LOADGL          glColor3d
+                                    LOADGL          glColor3f
+                                    LOADGL          glColor3i
+                                    LOADGL          glColor3s
+                                    LOADGL          glColor3ub
+                                    LOADGL          glColor3ui
+                                    LOADGL          glColor3us
+                                    LOADGL          glColor4b
+                                    LOADGL          glColor4d
+                                    LOADGL          glColor4f
+                                    LOADGL          glColor4i
+                                    LOADGL          glColor4s
+                                    LOADGL          glColor4ub
+                                    LOADGL          glColor4ui
+                                    LOADGL          glColor4us
+                                    LOADGL          glColor3bv
+                                    LOADGL          glColor3dv
+                                    LOADGL          glColor3fv
+                                    LOADGL          glColor3iv
+                                    LOADGL          glColor3sv
+                                    LOADGL          glColor3ubv
+                                    LOADGL          glColor3uiv
+                                    LOADGL          glColor3usv
+                                    LOADGL          glColor4bv
+                                    LOADGL          glColor4dv
+                                    LOADGL          glColor4fv
+                                    LOADGL          glColor4iv
+                                    LOADGL          glColor4sv
+                                    LOADGL          glColor4ubv
+                                    LOADGL          glColor4uiv
+                                    LOADGL          glColor4usv
+                                    LOADGL          glTexCoord1d
+                                    LOADGL          glTexCoord1f
+                                    LOADGL          glTexCoord1i
+                                    LOADGL          glTexCoord1s
+                                    LOADGL          glTexCoord2d
+                                    LOADGL          glTexCoord2f
+                                    LOADGL          glTexCoord2i
+                                    LOADGL          glTexCoord2s
+                                    LOADGL          glTexCoord3d
+                                    LOADGL          glTexCoord3f
+                                    LOADGL          glTexCoord3i
+                                    LOADGL          glTexCoord3s
+                                    LOADGL          glTexCoord4d
+                                    LOADGL          glTexCoord4f
+                                    LOADGL          glTexCoord4i
+                                    LOADGL          glTexCoord4s
+                                    LOADGL          glTexCoord1dv
+                                    LOADGL          glTexCoord1fv
+                                    LOADGL          glTexCoord1iv
+                                    LOADGL          glTexCoord1sv
+                                    LOADGL          glTexCoord2dv
+                                    LOADGL          glTexCoord2fv
+                                    LOADGL          glTexCoord2iv
+                                    LOADGL          glTexCoord2sv
+                                    LOADGL          glTexCoord3dv
+                                    LOADGL          glTexCoord3fv
+                                    LOADGL          glTexCoord3iv
+                                    LOADGL          glTexCoord3sv
+                                    LOADGL          glTexCoord4dv
+                                    LOADGL          glTexCoord4fv
+                                    LOADGL          glTexCoord4iv
+                                    LOADGL          glTexCoord4sv
+                                    LOADGL          glRasterPos2d
+                                    LOADGL          glRasterPos2f
+                                    LOADGL          glRasterPos2i
+                                    LOADGL          glRasterPos2s
+                                    LOADGL          glRasterPos3d
+                                    LOADGL          glRasterPos3f
+                                    LOADGL          glRasterPos3i
+                                    LOADGL          glRasterPos3s
+                                    LOADGL          glRasterPos4d
+                                    LOADGL          glRasterPos4f
+                                    LOADGL          glRasterPos4i
+                                    LOADGL          glRasterPos4s
+                                    LOADGL          glRasterPos2dv
+                                    LOADGL          glRasterPos2fv
+                                    LOADGL          glRasterPos2iv
+                                    LOADGL          glRasterPos2sv
+                                    LOADGL          glRasterPos3dv
+                                    LOADGL          glRasterPos3fv
+                                    LOADGL          glRasterPos3iv
+                                    LOADGL          glRasterPos3sv
+                                    LOADGL          glRasterPos4dv
+                                    LOADGL          glRasterPos4fv
+                                    LOADGL          glRasterPos4iv
+                                    LOADGL          glRasterPos4sv
+                                    LOADGL          glRectd
+                                    LOADGL          glRectf
+                                    LOADGL          glRecti
+                                    LOADGL          glRects
+                                    LOADGL          glRectdv
+                                    LOADGL          glRectfv
+                                    LOADGL          glRectiv
+                                    LOADGL          glRectsv
+                                    LOADGL          glShadeModel
+                                    LOADGL          glLightf
+                                    LOADGL          glLighti
+                                    LOADGL          glLightfv
+                                    LOADGL          glLightiv
+                                    LOADGL          glGetLightfv
+                                    LOADGL          glGetLightiv
+                                    LOADGL          glLightModelf
+                                    LOADGL          glLightModeli
+                                    LOADGL          glLightModelfv
+                                    LOADGL          glLightModeliv
+                                    LOADGL          glMaterialf
+                                    LOADGL          glMateriali
+                                    LOADGL          glMaterialfv
+                                    LOADGL          glMaterialiv
+                                    LOADGL          glGetMaterialfv
+                                    LOADGL          glGetMaterialiv
+                                    LOADGL          glColorMaterial
+                                    LOADGL          glPixelZoom
+                                    LOADGL          glPixelStoref
+                                    LOADGL          glPixelStorei
+                                    LOADGL          glPixelTransferf
+                                    LOADGL          glPixelTransferi
+                                    LOADGL          glPixelMapfv
+                                    LOADGL          glPixelMapuiv
+                                    LOADGL          glPixelMapusv
+                                    LOADGL          glGetPixelMapfv
+                                    LOADGL          glGetPixelMapuiv
+                                    LOADGL          glGetPixelMapusv
+                                    LOADGL          glBitmap
+                                    LOADGL          glReadPixels
+                                    LOADGL          glDrawPixels
+                                    LOADGL          glCopyPixels
+                                    LOADGL          glStencilFunc
+                                    LOADGL          glStencilMask
+                                    LOADGL          glStencilOp
+                                    LOADGL          glClearStencil
+                                    LOADGL          glTexGend
+                                    LOADGL          glTexGenf
+                                    LOADGL          glTexGeni
+                                    LOADGL          glTexGendv
+                                    LOADGL          glTexGenfv
+                                    LOADGL          glTexGeniv
+                                    LOADGL          glGetTexGendv
+                                    LOADGL          glGetTexGenfv
+                                    LOADGL          glGetTexGeniv
+                                    LOADGL          glTexEnvf
+                                    LOADGL          glTexEnvi
+                                    LOADGL          glTexEnvfv
+                                    LOADGL          glTexEnviv
+                                    LOADGL          glGetTexEnvfv
+                                    LOADGL          glGetTexEnviv
+                                    LOADGL          glTexParameterf
+                                    LOADGL          glTexParameteri
+                                    LOADGL          glTexParameterfv
+                                    LOADGL          glTexParameteriv
+                                    LOADGL          glGetTexParameterfv
+                                    LOADGL          glGetTexParameteriv
+                                    LOADGL          glGetTexLevelParameterfv
+                                    LOADGL          glGetTexLevelParameteriv
+                                    LOADGL          glTexImage1D
+                                    LOADGL          glTexImage2D
+                                    LOADGL          glGetTexImage
+                                    LOADGL          glMap1d
+                                    LOADGL          glMap1f
+                                    LOADGL          glMap2d
+                                    LOADGL          glMap2f
+                                    LOADGL          glGetMapdv
+                                    LOADGL          glGetMapfv
+                                    LOADGL          glGetMapiv
+                                    LOADGL          glEvalCoord1d
+                                    LOADGL          glEvalCoord1f
+                                    LOADGL          glEvalCoord1dv
+                                    LOADGL          glEvalCoord1fv
+                                    LOADGL          glEvalCoord2d
+                                    LOADGL          glEvalCoord2f
+                                    LOADGL          glEvalCoord2dv
+                                    LOADGL          glEvalCoord2fv
+                                    LOADGL          glMapGrid1d
+                                    LOADGL          glMapGrid1f
+                                    LOADGL          glMapGrid2d
+                                    LOADGL          glMapGrid2f
+                                    LOADGL          glEvalPoint1
+                                    LOADGL          glEvalPoint2
+                                    LOADGL          glEvalMesh1
+                                    LOADGL          glEvalMesh2
+                                    LOADGL          glFogf
+                                    LOADGL          glFogi
+                                    LOADGL          glFogfv
+                                    LOADGL          glFogiv
+                                    LOADGL          glFeedbackBuffer
+                                    LOADGL          glPassThrough
+                                    LOADGL          glSelectBuffer
+                                    LOADGL          glInitNames
+                                    LOADGL          glLoadName
+                                    LOADGL          glPushName
+                                    LOADGL          glPopName
+                                    LOADGL          glGenTextures
+                                    LOADGL          glDeleteTextures
+                                    LOADGL          glBindTexture
+                                    LOADGL          glPrioritizeTextures
+                                    LOADGL          glAreTexturesResident
+                                    LOADGL          glIsTexture
+                                    LOADGL          glTexSubImage1D
+                                    LOADGL          glTexSubImage2D
+                                    LOADGL          glCopyTexImage1D
+                                    LOADGL          glCopyTexImage2D
+                                    LOADGL          glCopyTexSubImage1D
+                                    LOADGL          glCopyTexSubImage2D
+                                    LOADGL          glVertexPointer
+                                    LOADGL          glNormalPointer
+                                    LOADGL          glColorPointer
+                                    LOADGL          glIndexPointer
+                                    LOADGL          glTexCoordPointer
+                                    LOADGL          glEdgeFlagPointer
+                                    LOADGL          glGetPointerv
+                                    LOADGL          glArrayElement
+                                    LOADGL          glDrawArrays
+                                    LOADGL          glDrawElements
+                                    LOADGL          glInterleavedArrays
+                                    LOADGL          glDrawRangeElements
+                                    LOADGL          glTexImage3D
+                                    LOADGL          glTexSubImage3D
+                                    LOADGL          glCopyTexSubImage3D
+                                    LOADGL          glActiveTexture
+                                    LOADGL          glSampleCoverage
+                                    LOADGL          glCompressedTexImage3D
+                                    LOADGL          glCompressedTexImage2D
+                                    LOADGL          glCompressedTexImage1D
+                                    LOADGL          glCompressedTexSubImage3D
+                                    LOADGL          glCompressedTexSubImage2D
+                                    LOADGL          glCompressedTexSubImage1D
+                                    LOADGL          glGetCompressedTexImage
+                                    LOADGL          glClientActiveTexture
+                                    LOADGL          glMultiTexCoord1d
+                                    LOADGL          glMultiTexCoord1dv
+                                    LOADGL          glMultiTexCoord1f
+                                    LOADGL          glMultiTexCoord1fv
+                                    LOADGL          glMultiTexCoord1i
+                                    LOADGL          glMultiTexCoord1iv
+                                    LOADGL          glMultiTexCoord1s
+                                    LOADGL          glMultiTexCoord1sv
+                                    LOADGL          glMultiTexCoord2d
+                                    LOADGL          glMultiTexCoord2dv
+                                    LOADGL          glMultiTexCoord2f
+                                    LOADGL          glMultiTexCoord2fv
+                                    LOADGL          glMultiTexCoord2i
+                                    LOADGL          glMultiTexCoord2iv
+                                    LOADGL          glMultiTexCoord2s
+                                    LOADGL          glMultiTexCoord2sv
+                                    LOADGL          glMultiTexCoord3d
+                                    LOADGL          glMultiTexCoord3dv
+                                    LOADGL          glMultiTexCoord3f
+                                    LOADGL          glMultiTexCoord3fv
+                                    LOADGL          glMultiTexCoord3i
+                                    LOADGL          glMultiTexCoord3iv
+                                    LOADGL          glMultiTexCoord3s
+                                    LOADGL          glMultiTexCoord3sv
+                                    LOADGL          glMultiTexCoord4d
+                                    LOADGL          glMultiTexCoord4dv
+                                    LOADGL          glMultiTexCoord4f
+                                    LOADGL          glMultiTexCoord4fv
+                                    LOADGL          glMultiTexCoord4i
+                                    LOADGL          glMultiTexCoord4iv
+                                    LOADGL          glMultiTexCoord4s
+                                    LOADGL          glMultiTexCoord4sv
+                                    LOADGL          glLoadTransposeMatrixf
+                                    LOADGL          glLoadTransposeMatrixd
+                                    LOADGL          glMultTransposeMatrixf
+                                    LOADGL          glMultTransposeMatrixd
+                                    LOADGL          glBlendFuncSeparate
+                                    LOADGL          glMultiDrawArrays
+                                    LOADGL          glMultiDrawElements
+                                    LOADGL          glPointParameterf
+                                    LOADGL          glPointParameterfv
+                                    LOADGL          glPointParameteri
+                                    LOADGL          glPointParameteriv
+                                    LOADGL          glFogCoordf
+                                    LOADGL          glFogCoordfv
+                                    LOADGL          glFogCoordd
+                                    LOADGL          glFogCoorddv
+                                    LOADGL          glFogCoordPointer
+                                    LOADGL          glSecondaryColor3b
+                                    LOADGL          glSecondaryColor3bv
+                                    LOADGL          glSecondaryColor3d
+                                    LOADGL          glSecondaryColor3dv
+                                    LOADGL          glSecondaryColor3f
+                                    LOADGL          glSecondaryColor3fv
+                                    LOADGL          glSecondaryColor3i
+                                    LOADGL          glSecondaryColor3iv
+                                    LOADGL          glSecondaryColor3s
+                                    LOADGL          glSecondaryColor3sv
+                                    LOADGL          glSecondaryColor3ub
+                                    LOADGL          glSecondaryColor3ubv
+                                    LOADGL          glSecondaryColor3ui
+                                    LOADGL          glSecondaryColor3uiv
+                                    LOADGL          glSecondaryColor3us
+                                    LOADGL          glSecondaryColor3usv
+                                    LOADGL          glSecondaryColorPointer
+                                    LOADGL          glWindowPos2d
+                                    LOADGL          glWindowPos2dv
+                                    LOADGL          glWindowPos2f
+                                    LOADGL          glWindowPos2fv
+                                    LOADGL          glWindowPos2i
+                                    LOADGL          glWindowPos2iv
+                                    LOADGL          glWindowPos2s
+                                    LOADGL          glWindowPos2sv
+                                    LOADGL          glWindowPos3d
+                                    LOADGL          glWindowPos3dv
+                                    LOADGL          glWindowPos3f
+                                    LOADGL          glWindowPos3fv
+                                    LOADGL          glWindowPos3i
+                                    LOADGL          glWindowPos3iv
+                                    LOADGL          glWindowPos3s
+                                    LOADGL          glWindowPos3sv
+                                    LOADGL          glBlendColor
+                                    LOADGL          glBlendEquation
+                                    LOADGL          glGenQueries
+                                    LOADGL          glDeleteQueries
+                                    LOADGL          glIsQuery
+                                    LOADGL          glBeginQuery
+                                    LOADGL          glEndQuery
+                                    LOADGL          glGetQueryiv
+                                    LOADGL          glGetQueryObjectiv
+                                    LOADGL          glGetQueryObjectuiv
+                                    LOADGL          glBindBuffer
+                                    LOADGL          glDeleteBuffers
+                                    LOADGL          glGenBuffers
+                                    LOADGL          glIsBuffer
+                                    LOADGL          glBufferData
+                                    LOADGL          glBufferSubData
+                                    LOADGL          glGetBufferSubData
+                                    LOADGL          glMapBuffer
+                                    LOADGL          glUnmapBuffer
+                                    LOADGL          glGetBufferParameteriv
+                                    LOADGL          glGetBufferPointerv
+                                    LOADGL          glBlendEquationSeparate
+                                    LOADGL          glDrawBuffers
+                                    LOADGL          glStencilOpSeparate
+                                    LOADGL          glStencilFuncSeparate
+                                    LOADGL          glStencilMaskSeparate
+                                    LOADGL          glAttachShader
+                                    LOADGL          glBindAttribLocation
+                                    LOADGL          glCompileShader
+                                    LOADGL          glCreateProgram
+                                    LOADGL          glCreateShader
+                                    LOADGL          glDeleteProgram
+                                    LOADGL          glDeleteShader
+                                    LOADGL          glDetachShader
+                                    LOADGL          glDisableVertexAttribArray
+                                    LOADGL          glEnableVertexAttribArray
+                                    LOADGL          glGetActiveAttrib
+                                    LOADGL          glGetActiveUniform
+                                    LOADGL          glGetAttachedShaders
+                                    LOADGL          glGetAttribLocation
+                                    LOADGL          glGetProgramiv
+                                    LOADGL          glGetProgramInfoLog
+                                    LOADGL          glGetShaderiv
+                                    LOADGL          glGetShaderInfoLog
+                                    LOADGL          glGetShaderSource
+                                    LOADGL          glGetUniformLocation
+                                    LOADGL          glGetUniformfv
+                                    LOADGL          glGetUniformiv
+                                    LOADGL          glGetVertexAttribdv
+                                    LOADGL          glGetVertexAttribfv
+                                    LOADGL          glGetVertexAttribiv
+                                    LOADGL          glGetVertexAttribPointerv
+                                    LOADGL          glIsProgram
+                                    LOADGL          glIsShader
+                                    LOADGL          glLinkProgram
+                                    LOADGL          glShaderSource
+                                    LOADGL          glUseProgram
+                                    LOADGL          glUniform1f
+                                    LOADGL          glUniform2f
+                                    LOADGL          glUniform3f
+                                    LOADGL          glUniform4f
+                                    LOADGL          glUniform1i
+                                    LOADGL          glUniform2i
+                                    LOADGL          glUniform3i
+                                    LOADGL          glUniform4i
+                                    LOADGL          glUniform1fv
+                                    LOADGL          glUniform2fv
+                                    LOADGL          glUniform3fv
+                                    LOADGL          glUniform4fv
+                                    LOADGL          glUniform1iv
+                                    LOADGL          glUniform2iv
+                                    LOADGL          glUniform3iv
+                                    LOADGL          glUniform4iv
+                                    LOADGL          glUniformMatrix2fv
+                                    LOADGL          glUniformMatrix3fv
+                                    LOADGL          glUniformMatrix4fv
+                                    LOADGL          glValidateProgram
+                                    LOADGL          glVertexAttrib1d
+                                    LOADGL          glVertexAttrib1dv
+                                    LOADGL          glVertexAttrib1f
+                                    LOADGL          glVertexAttrib1fv
+                                    LOADGL          glVertexAttrib1s
+                                    LOADGL          glVertexAttrib1sv
+                                    LOADGL          glVertexAttrib2d
+                                    LOADGL          glVertexAttrib2dv
+                                    LOADGL          glVertexAttrib2f
+                                    LOADGL          glVertexAttrib2fv
+                                    LOADGL          glVertexAttrib2s
+                                    LOADGL          glVertexAttrib2sv
+                                    LOADGL          glVertexAttrib3d
+                                    LOADGL          glVertexAttrib3dv
+                                    LOADGL          glVertexAttrib3f
+                                    LOADGL          glVertexAttrib3fv
+                                    LOADGL          glVertexAttrib3s
+                                    LOADGL          glVertexAttrib3sv
+                                    LOADGL          glVertexAttrib4Nbv
+                                    LOADGL          glVertexAttrib4Niv
+                                    LOADGL          glVertexAttrib4Nsv
+                                    LOADGL          glVertexAttrib4Nub
+                                    LOADGL          glVertexAttrib4Nubv
+                                    LOADGL          glVertexAttrib4Nuiv
+                                    LOADGL          glVertexAttrib4Nusv
+                                    LOADGL          glVertexAttrib4bv
+                                    LOADGL          glVertexAttrib4d
+                                    LOADGL          glVertexAttrib4dv
+                                    LOADGL          glVertexAttrib4f
+                                    LOADGL          glVertexAttrib4fv
+                                    LOADGL          glVertexAttrib4iv
+                                    LOADGL          glVertexAttrib4s
+                                    LOADGL          glVertexAttrib4sv
+                                    LOADGL          glVertexAttrib4ubv
+                                    LOADGL          glVertexAttrib4uiv
+                                    LOADGL          glVertexAttrib4usv
+                                    LOADGL          glVertexAttribPointer
+                                    LOADGL          glUniformMatrix2x3fv
+                                    LOADGL          glUniformMatrix3x2fv
+                                    LOADGL          glUniformMatrix2x4fv
+                                    LOADGL          glUniformMatrix4x2fv
+                                    LOADGL          glUniformMatrix3x4fv
+                                    LOADGL          glUniformMatrix4x3fv
+                                    LOADGL          glColorMaski
+                                    LOADGL          glGetBooleani_v
+                                    LOADGL          glGetIntegeri_v
+                                    LOADGL          glEnablei
+                                    LOADGL          glDisablei
+                                    LOADGL          glIsEnabledi
+                                    LOADGL          glBeginTransformFeedback
+                                    LOADGL          glEndTransformFeedback
+                                    LOADGL          glBindBufferRange
+                                    LOADGL          glBindBufferBase
+                                    LOADGL          glTransformFeedbackVaryings
+                                    LOADGL          glGetTransformFeedbackVarying
+                                    LOADGL          glClampColor
+                                    LOADGL          glBeginConditionalRender
+                                    LOADGL          glEndConditionalRender
+                                    LOADGL          glVertexAttribIPointer
+                                    LOADGL          glGetVertexAttribIiv
+                                    LOADGL          glGetVertexAttribIuiv
+                                    LOADGL          glVertexAttribI1i
+                                    LOADGL          glVertexAttribI2i
+                                    LOADGL          glVertexAttribI3i
+                                    LOADGL          glVertexAttribI4i
+                                    LOADGL          glVertexAttribI1ui
+                                    LOADGL          glVertexAttribI2ui
+                                    LOADGL          glVertexAttribI3ui
+                                    LOADGL          glVertexAttribI4ui
+                                    LOADGL          glVertexAttribI1iv
+                                    LOADGL          glVertexAttribI2iv
+                                    LOADGL          glVertexAttribI3iv
+                                    LOADGL          glVertexAttribI4iv
+                                    LOADGL          glVertexAttribI1uiv
+                                    LOADGL          glVertexAttribI2uiv
+                                    LOADGL          glVertexAttribI3uiv
+                                    LOADGL          glVertexAttribI4uiv
+                                    LOADGL          glVertexAttribI4bv
+                                    LOADGL          glVertexAttribI4sv
+                                    LOADGL          glVertexAttribI4ubv
+                                    LOADGL          glVertexAttribI4usv
+                                    LOADGL          glGetUniformuiv
+                                    LOADGL          glBindFragDataLocation
+                                    LOADGL          glGetFragDataLocation
+                                    LOADGL          glUniform1ui
+                                    LOADGL          glUniform2ui
+                                    LOADGL          glUniform3ui
+                                    LOADGL          glUniform4ui
+                                    LOADGL          glUniform1uiv
+                                    LOADGL          glUniform2uiv
+                                    LOADGL          glUniform3uiv
+                                    LOADGL          glUniform4uiv
+                                    LOADGL          glTexParameterIiv
+                                    LOADGL          glTexParameterIuiv
+                                    LOADGL          glGetTexParameterIiv
+                                    LOADGL          glGetTexParameterIuiv
+                                    LOADGL          glClearBufferiv
+                                    LOADGL          glClearBufferuiv
+                                    LOADGL          glClearBufferfv
+                                    LOADGL          glClearBufferfi
+                                    LOADGL          glGetStringi
+                                    LOADGL          glIsRenderbuffer
+                                    LOADGL          glBindRenderbuffer
+                                    LOADGL          glDeleteRenderbuffers
+                                    LOADGL          glGenRenderbuffers
+                                    LOADGL          glRenderbufferStorage
+                                    LOADGL          glGetRenderbufferParameteriv
+                                    LOADGL          glIsFramebuffer
+                                    LOADGL          glBindFramebuffer
+                                    LOADGL          glDeleteFramebuffers
+                                    LOADGL          glGenFramebuffers
+                                    LOADGL          glCheckFramebufferStatus
+                                    LOADGL          glFramebufferTexture1D
+                                    LOADGL          glFramebufferTexture2D
+                                    LOADGL          glFramebufferTexture3D
+                                    LOADGL          glFramebufferRenderbuffer
+                                    LOADGL          glGetFramebufferAttachmentParameteriv
+                                    LOADGL          glGenerateMipmap
+                                    LOADGL          glBlitFramebuffer
+                                    LOADGL          glRenderbufferStorageMultisample
+                                    LOADGL          glFramebufferTextureLayer
+                                    LOADGL          glMapBufferRange
+                                    LOADGL          glFlushMappedBufferRange
+                                    LOADGL          glBindVertexArray
+                                    LOADGL          glDeleteVertexArrays
+                                    LOADGL          glGenVertexArrays
+                                    LOADGL          glIsVertexArray
+                                    LOADGL          glDrawArraysInstanced
+                                    LOADGL          glDrawElementsInstanced
+                                    LOADGL          glTexBuffer
+                                    LOADGL          glPrimitiveRestartIndex
+                                    LOADGL          glCopyBufferSubData
+                                    LOADGL          glGetUniformIndices
+                                    LOADGL          glGetActiveUniformsiv
+                                    LOADGL          glGetActiveUniformName
+                                    LOADGL          glGetUniformBlockIndex
+                                    LOADGL          glGetActiveUniformBlockiv
+                                    LOADGL          glGetActiveUniformBlockName
+                                    LOADGL          glUniformBlockBinding
+                                    LOADGL          glDrawElementsBaseVertex
+                                    LOADGL          glDrawRangeElementsBaseVertex
+                                    LOADGL          glDrawElementsInstancedBaseVertex
+                                    LOADGL          glMultiDrawElementsBaseVertex
+                                    LOADGL          glProvokingVertex
+                                    LOADGL          glFenceSync
+                                    LOADGL          glIsSync
+                                    LOADGL          glDeleteSync
+                                    LOADGL          glClientWaitSync
+                                    LOADGL          glWaitSync
+                                    LOADGL          glGetInteger64v
+                                    LOADGL          glGetSynciv
+                                    LOADGL          glGetInteger64i_v
+                                    LOADGL          glGetBufferParameteri64v
+                                    LOADGL          glFramebufferTexture
+                                    LOADGL          glTexImage2DMultisample
+                                    LOADGL          glTexImage3DMultisample
+                                    LOADGL          glGetMultisamplefv
+                                    LOADGL          glSampleMaski
+                                    LOADGL          glBindFragDataLocationIndexed
+                                    LOADGL          glGetFragDataIndex
+                                    LOADGL          glGenSamplers
+                                    LOADGL          glDeleteSamplers
+                                    LOADGL          glIsSampler
+                                    LOADGL          glBindSampler
+                                    LOADGL          glSamplerParameteri
+                                    LOADGL          glSamplerParameteriv
+                                    LOADGL          glSamplerParameterf
+                                    LOADGL          glSamplerParameterfv
+                                    LOADGL          glSamplerParameterIiv
+                                    LOADGL          glSamplerParameterIuiv
+                                    LOADGL          glGetSamplerParameteriv
+                                    LOADGL          glGetSamplerParameterIiv
+                                    LOADGL          glGetSamplerParameterfv
+                                    LOADGL          glGetSamplerParameterIuiv
+                                    LOADGL          glQueryCounter
+                                    LOADGL          glGetQueryObjecti64v
+                                    LOADGL          glGetQueryObjectui64v
+                                    LOADGL          glVertexAttribDivisor
+                                    LOADGL          glVertexAttribP1ui
+                                    LOADGL          glVertexAttribP1uiv
+                                    LOADGL          glVertexAttribP2ui
+                                    LOADGL          glVertexAttribP2uiv
+                                    LOADGL          glVertexAttribP3ui
+                                    LOADGL          glVertexAttribP3uiv
+                                    LOADGL          glVertexAttribP4ui
+                                    LOADGL          glVertexAttribP4uiv
+                                    LOADGL          glVertexP2ui
+                                    LOADGL          glVertexP2uiv
+                                    LOADGL          glVertexP3ui
+                                    LOADGL          glVertexP3uiv
+                                    LOADGL          glVertexP4ui
+                                    LOADGL          glVertexP4uiv
+                                    LOADGL          glTexCoordP1ui
+                                    LOADGL          glTexCoordP1uiv
+                                    LOADGL          glTexCoordP2ui
+                                    LOADGL          glTexCoordP2uiv
+                                    LOADGL          glTexCoordP3ui
+                                    LOADGL          glTexCoordP3uiv
+                                    LOADGL          glTexCoordP4ui
+                                    LOADGL          glTexCoordP4uiv
+                                    LOADGL          glMultiTexCoordP1ui
+                                    LOADGL          glMultiTexCoordP1uiv
+                                    LOADGL          glMultiTexCoordP2ui
+                                    LOADGL          glMultiTexCoordP2uiv
+                                    LOADGL          glMultiTexCoordP3ui
+                                    LOADGL          glMultiTexCoordP3uiv
+                                    LOADGL          glMultiTexCoordP4ui
+                                    LOADGL          glMultiTexCoordP4uiv
+                                    LOADGL          glNormalP3ui
+                                    LOADGL          glNormalP3uiv
+                                    LOADGL          glColorP3ui
+                                    LOADGL          glColorP3uiv
+                                    LOADGL          glColorP4ui
+                                    LOADGL          glColorP4uiv
+                                    LOADGL          glSecondaryColorP3ui
+                                    LOADGL          glSecondaryColorP3uiv
+                                    LOADGL          glMinSampleShading
+                                    LOADGL          glBlendEquationi
+                                    LOADGL          glBlendEquationSeparatei
+                                    LOADGL          glBlendFunci
+                                    LOADGL          glBlendFuncSeparatei
+                                    LOADGL          glDrawArraysIndirect
+                                    LOADGL          glDrawElementsIndirect
+                                    LOADGL          glUniform1d
+                                    LOADGL          glUniform2d
+                                    LOADGL          glUniform3d
+                                    LOADGL          glUniform4d
+                                    LOADGL          glUniform1dv
+                                    LOADGL          glUniform2dv
+                                    LOADGL          glUniform3dv
+                                    LOADGL          glUniform4dv
+                                    LOADGL          glUniformMatrix2dv
+                                    LOADGL          glUniformMatrix3dv
+                                    LOADGL          glUniformMatrix4dv
+                                    LOADGL          glUniformMatrix2x3dv
+                                    LOADGL          glUniformMatrix2x4dv
+                                    LOADGL          glUniformMatrix3x2dv
+                                    LOADGL          glUniformMatrix3x4dv
+                                    LOADGL          glUniformMatrix4x2dv
+                                    LOADGL          glUniformMatrix4x3dv
+                                    LOADGL          glGetUniformdv
+                                    LOADGL          glGetSubroutineUniformLocation
+                                    LOADGL          glGetSubroutineIndex
+                                    LOADGL          glGetActiveSubroutineUniformiv
+                                    LOADGL          glGetActiveSubroutineUniformName
+                                    LOADGL          glGetActiveSubroutineName
+                                    LOADGL          glUniformSubroutinesuiv
+                                    LOADGL          glGetUniformSubroutineuiv
+                                    LOADGL          glGetProgramStageiv
+                                    LOADGL          glPatchParameteri
+                                    LOADGL          glPatchParameterfv
+                                    LOADGL          glBindTransformFeedback
+                                    LOADGL          glDeleteTransformFeedbacks
+                                    LOADGL          glGenTransformFeedbacks
+                                    LOADGL          glIsTransformFeedback
+                                    LOADGL          glPauseTransformFeedback
+                                    LOADGL          glResumeTransformFeedback
+                                    LOADGL          glDrawTransformFeedback
+                                    LOADGL          glDrawTransformFeedbackStream
+                                    LOADGL          glBeginQueryIndexed
+                                    LOADGL          glEndQueryIndexed
+                                    LOADGL          glGetQueryIndexediv
+                                    LOADGL          glReleaseShaderCompiler
+                                    LOADGL          glShaderBinary
+                                    LOADGL          glGetShaderPrecisionFormat
+                                    LOADGL          glDepthRangef
+                                    LOADGL          glClearDepthf
+                                    LOADGL          glGetProgramBinary
+                                    LOADGL          glProgramBinary
+                                    LOADGL          glProgramParameteri
+                                    LOADGL          glUseProgramStages
+                                    LOADGL          glActiveShaderProgram
+                                    LOADGL          glCreateShaderProgramv
+                                    LOADGL          glBindProgramPipeline
+                                    LOADGL          glDeleteProgramPipelines
+                                    LOADGL          glGenProgramPipelines
+                                    LOADGL          glIsProgramPipeline
+                                    LOADGL          glGetProgramPipelineiv
+                                    LOADGL          glProgramUniform1i
+                                    LOADGL          glProgramUniform1iv
+                                    LOADGL          glProgramUniform1f
+                                    LOADGL          glProgramUniform1fv
+                                    LOADGL          glProgramUniform1d
+                                    LOADGL          glProgramUniform1dv
+                                    LOADGL          glProgramUniform1ui
+                                    LOADGL          glProgramUniform1uiv
+                                    LOADGL          glProgramUniform2i
+                                    LOADGL          glProgramUniform2iv
+                                    LOADGL          glProgramUniform2f
+                                    LOADGL          glProgramUniform2fv
+                                    LOADGL          glProgramUniform2d
+                                    LOADGL          glProgramUniform2dv
+                                    LOADGL          glProgramUniform2ui
+                                    LOADGL          glProgramUniform2uiv
+                                    LOADGL          glProgramUniform3i
+                                    LOADGL          glProgramUniform3iv
+                                    LOADGL          glProgramUniform3f
+                                    LOADGL          glProgramUniform3fv
+                                    LOADGL          glProgramUniform3d
+                                    LOADGL          glProgramUniform3dv
+                                    LOADGL          glProgramUniform3ui
+                                    LOADGL          glProgramUniform3uiv
+                                    LOADGL          glProgramUniform4i
+                                    LOADGL          glProgramUniform4iv
+                                    LOADGL          glProgramUniform4f
+                                    LOADGL          glProgramUniform4fv
+                                    LOADGL          glProgramUniform4d
+                                    LOADGL          glProgramUniform4dv
+                                    LOADGL          glProgramUniform4ui
+                                    LOADGL          glProgramUniform4uiv
+                                    LOADGL          glProgramUniformMatrix2fv
+                                    LOADGL          glProgramUniformMatrix3fv
+                                    LOADGL          glProgramUniformMatrix4fv
+                                    LOADGL          glProgramUniformMatrix2dv
+                                    LOADGL          glProgramUniformMatrix3dv
+                                    LOADGL          glProgramUniformMatrix4dv
+                                    LOADGL          glProgramUniformMatrix2x3fv
+                                    LOADGL          glProgramUniformMatrix3x2fv
+                                    LOADGL          glProgramUniformMatrix2x4fv
+                                    LOADGL          glProgramUniformMatrix4x2fv
+                                    LOADGL          glProgramUniformMatrix3x4fv
+                                    LOADGL          glProgramUniformMatrix4x3fv
+                                    LOADGL          glProgramUniformMatrix2x3dv
+                                    LOADGL          glProgramUniformMatrix3x2dv
+                                    LOADGL          glProgramUniformMatrix2x4dv
+                                    LOADGL          glProgramUniformMatrix4x2dv
+                                    LOADGL          glProgramUniformMatrix3x4dv
+                                    LOADGL          glProgramUniformMatrix4x3dv
+                                    LOADGL          glValidateProgramPipeline
+                                    LOADGL          glGetProgramPipelineInfoLog
+                                    LOADGL          glVertexAttribL1d
+                                    LOADGL          glVertexAttribL2d
+                                    LOADGL          glVertexAttribL3d
+                                    LOADGL          glVertexAttribL4d
+                                    LOADGL          glVertexAttribL1dv
+                                    LOADGL          glVertexAttribL2dv
+                                    LOADGL          glVertexAttribL3dv
+                                    LOADGL          glVertexAttribL4dv
+                                    LOADGL          glVertexAttribLPointer
+                                    LOADGL          glGetVertexAttribLdv
+                                    LOADGL          glViewportArrayv
+                                    LOADGL          glViewportIndexedf
+                                    LOADGL          glViewportIndexedfv
+                                    LOADGL          glScissorArrayv
+                                    LOADGL          glScissorIndexed
+                                    LOADGL          glScissorIndexedv
+                                    LOADGL          glDepthRangeArrayv
+                                    LOADGL          glDepthRangeIndexed
+                                    LOADGL          glGetFloati_v
+                                    LOADGL          glGetDoublei_v
+                                    LOADGL          glDrawArraysInstancedBaseInstance
+                                    LOADGL          glDrawElementsInstancedBaseInstance
+                                    LOADGL          glDrawElementsInstancedBaseVertexBaseInstance
+                                    LOADGL          glGetInternalformativ
+                                    LOADGL          glGetActiveAtomicCounterBufferiv
+                                    LOADGL          glBindImageTexture
+                                    LOADGL          glMemoryBarrier
+                                    LOADGL          glTexStorage1D
+                                    LOADGL          glTexStorage2D
+                                    LOADGL          glTexStorage3D
+                                    LOADGL          glDrawTransformFeedbackInstanced
+                                    LOADGL          glDrawTransformFeedbackStreamInstanced
+                                    LOADGL          glClearBufferData
+                                    LOADGL          glClearBufferSubData
+                                    LOADGL          glDispatchCompute
+                                    LOADGL          glDispatchComputeIndirect
+                                    LOADGL          glCopyImageSubData
+                                    LOADGL          glFramebufferParameteri
+                                    LOADGL          glGetFramebufferParameteriv
+                                    LOADGL          glGetInternalformati64v
+                                    LOADGL          glInvalidateTexSubImage
+                                    LOADGL          glInvalidateTexImage
+                                    LOADGL          glInvalidateBufferSubData
+                                    LOADGL          glInvalidateBufferData
+                                    LOADGL          glInvalidateFramebuffer
+                                    LOADGL          glInvalidateSubFramebuffer
+                                    LOADGL          glMultiDrawArraysIndirect
+                                    LOADGL          glMultiDrawElementsIndirect
+                                    LOADGL          glGetProgramInterfaceiv
+                                    LOADGL          glGetProgramResourceIndex
+                                    LOADGL          glGetProgramResourceName
+                                    LOADGL          glGetProgramResourceiv
+                                    LOADGL          glGetProgramResourceLocation
+                                    LOADGL          glGetProgramResourceLocationIndex
+                                    LOADGL          glShaderStorageBlockBinding
+                                    LOADGL          glTexBufferRange
+                                    LOADGL          glTexStorage2DMultisample
+                                    LOADGL          glTexStorage3DMultisample
+                                    LOADGL          glTextureView
+                                    LOADGL          glBindVertexBuffer
+                                    LOADGL          glVertexAttribFormat
+                                    LOADGL          glVertexAttribIFormat
+                                    LOADGL          glVertexAttribLFormat
+                                    LOADGL          glVertexAttribBinding
+                                    LOADGL          glVertexBindingDivisor
+                                    LOADGL          glDebugMessageControl
+                                    LOADGL          glDebugMessageInsert
+                                    LOADGL          glDebugMessageCallback
+                                    LOADGL          glGetDebugMessageLog
+                                    LOADGL          glPushDebugGroup
+                                    LOADGL          glPopDebugGroup
+                                    LOADGL          glObjectLabel
+                                    LOADGL          glGetObjectLabel
+                                    LOADGL          glObjectPtrLabel
+                                    LOADGL          glGetObjectPtrLabel
+                                    LOADGL          glBufferStorage
+                                    LOADGL          glClearTexImage
+                                    LOADGL          glClearTexSubImage
+                                    LOADGL          glBindBuffersBase
+                                    LOADGL          glBindBuffersRange
+                                    LOADGL          glBindTextures
+                                    LOADGL          glBindSamplers
+                                    LOADGL          glBindImageTextures
+                                    LOADGL          glBindVertexBuffers
+                                    LOADGL          glClipControl
+                                    LOADGL          glCreateTransformFeedbacks
+                                    LOADGL          glTransformFeedbackBufferBase
+                                    LOADGL          glTransformFeedbackBufferRange
+                                    LOADGL          glGetTransformFeedbackiv
+                                    LOADGL          glGetTransformFeedbacki_v
+                                    LOADGL          glGetTransformFeedbacki64_v
+                                    LOADGL          glCreateBuffers
+                                    LOADGL          glNamedBufferStorage
+                                    LOADGL          glNamedBufferData
+                                    LOADGL          glNamedBufferSubData
+                                    LOADGL          glCopyNamedBufferSubData
+                                    LOADGL          glClearNamedBufferData
+                                    LOADGL          glClearNamedBufferSubData
+                                    LOADGL          glMapNamedBuffer
+                                    LOADGL          glMapNamedBufferRange
+                                    LOADGL          glUnmapNamedBuffer
+                                    LOADGL          glFlushMappedNamedBufferRange
+                                    LOADGL          glGetNamedBufferParameteriv
+                                    LOADGL          glGetNamedBufferParameteri64v
+                                    LOADGL          glGetNamedBufferPointerv
+                                    LOADGL          glGetNamedBufferSubData
+                                    LOADGL          glCreateFramebuffers
+                                    LOADGL          glNamedFramebufferRenderbuffer
+                                    LOADGL          glNamedFramebufferParameteri
+                                    LOADGL          glNamedFramebufferTexture
+                                    LOADGL          glNamedFramebufferTextureLayer
+                                    LOADGL          glNamedFramebufferDrawBuffer
+                                    LOADGL          glNamedFramebufferDrawBuffers
+                                    LOADGL          glNamedFramebufferReadBuffer
+                                    LOADGL          glInvalidateNamedFramebufferData
+                                    LOADGL          glInvalidateNamedFramebufferSubData
+                                    LOADGL          glClearNamedFramebufferiv
+                                    LOADGL          glClearNamedFramebufferuiv
+                                    LOADGL          glClearNamedFramebufferfv
+                                    LOADGL          glClearNamedFramebufferfi
+                                    LOADGL          glBlitNamedFramebuffer
+                                    LOADGL          glCheckNamedFramebufferStatus
+                                    LOADGL          glGetNamedFramebufferParameteriv
+                                    LOADGL          glGetNamedFramebufferAttachmentParameteriv
+                                    LOADGL          glCreateRenderbuffers
+                                    LOADGL          glNamedRenderbufferStorage
+                                    LOADGL          glNamedRenderbufferStorageMultisample
+                                    LOADGL          glGetNamedRenderbufferParameteriv
+                                    LOADGL          glCreateTextures
+                                    LOADGL          glTextureBuffer
+                                    LOADGL          glTextureBufferRange
+                                    LOADGL          glTextureStorage1D
+                                    LOADGL          glTextureStorage2D
+                                    LOADGL          glTextureStorage3D
+                                    LOADGL          glTextureStorage2DMultisample
+                                    LOADGL          glTextureStorage3DMultisample
+                                    LOADGL          glTextureSubImage1D
+                                    LOADGL          glTextureSubImage2D
+                                    LOADGL          glTextureSubImage3D
+                                    LOADGL          glCompressedTextureSubImage1D
+                                    LOADGL          glCompressedTextureSubImage2D
+                                    LOADGL          glCompressedTextureSubImage3D
+                                    LOADGL          glCopyTextureSubImage1D
+                                    LOADGL          glCopyTextureSubImage2D
+                                    LOADGL          glCopyTextureSubImage3D
+                                    LOADGL          glTextureParameterf
+                                    LOADGL          glTextureParameterfv
+                                    LOADGL          glTextureParameteri
+                                    LOADGL          glTextureParameterIiv
+                                    LOADGL          glTextureParameterIuiv
+                                    LOADGL          glTextureParameteriv
+                                    LOADGL          glGenerateTextureMipmap
+                                    LOADGL          glBindTextureUnit
+                                    LOADGL          glGetTextureImage
+                                    LOADGL          glGetCompressedTextureImage
+                                    LOADGL          glGetTextureLevelParameterfv
+                                    LOADGL          glGetTextureLevelParameteriv
+                                    LOADGL          glGetTextureParameterfv
+                                    LOADGL          glGetTextureParameterIiv
+                                    LOADGL          glGetTextureParameterIuiv
+                                    LOADGL          glGetTextureParameteriv
+                                    LOADGL          glCreateVertexArrays
+                                    LOADGL          glDisableVertexArrayAttrib
+                                    LOADGL          glEnableVertexArrayAttrib
+                                    LOADGL          glVertexArrayElementBuffer
+                                    LOADGL          glVertexArrayVertexBuffer
+                                    LOADGL          glVertexArrayVertexBuffers
+                                    LOADGL          glVertexArrayAttribBinding
+                                    LOADGL          glVertexArrayAttribFormat
+                                    LOADGL          glVertexArrayAttribIFormat
+                                    LOADGL          glVertexArrayAttribLFormat
+                                    LOADGL          glVertexArrayBindingDivisor
+                                    LOADGL          glGetVertexArrayiv
+                                    LOADGL          glGetVertexArrayIndexediv
+                                    LOADGL          glGetVertexArrayIndexed64iv
+                                    LOADGL          glCreateSamplers
+                                    LOADGL          glCreateProgramPipelines
+                                    LOADGL          glCreateQueries
+                                    LOADGL          glGetQueryBufferObjecti64v
+                                    LOADGL          glGetQueryBufferObjectiv
+                                    LOADGL          glGetQueryBufferObjectui64v
+                                    LOADGL          glGetQueryBufferObjectuiv
+                                    LOADGL          glMemoryBarrierByRegion
+                                    LOADGL          glGetTextureSubImage
+                                    LOADGL          glGetCompressedTextureSubImage
+                                    LOADGL          glGetGraphicsResetStatus
+                                    LOADGL          glGetnCompressedTexImage
+                                    LOADGL          glGetnTexImage
+                                    LOADGL          glGetnUniformdv
+                                    LOADGL          glGetnUniformfv
+                                    LOADGL          glGetnUniformiv
+                                    LOADGL          glGetnUniformuiv
+                                    LOADGL          glReadnPixels
+                                    LOADGL          glGetnMapdv
+                                    LOADGL          glGetnMapfv
+                                    LOADGL          glGetnMapiv
+                                    LOADGL          glGetnPixelMapfv
+                                    LOADGL          glGetnPixelMapuiv
+                                    LOADGL          glGetnPixelMapusv
+                                    LOADGL          glGetnPolygonStipple
+                                    LOADGL          glGetnColorTable
+                                    LOADGL          glGetnConvolutionFilter
+                                    LOADGL          glGetnSeparableFilter
+                                    LOADGL          glGetnHistogram
+                                    LOADGL          glGetnMinmax
+                                    LOADGL          glTextureBarrier
+                                    LOADGL          glSpecializeShader
+                                    LOADGL          glMultiDrawArraysIndirectCount
+                                    LOADGL          glMultiDrawElementsIndirectCount
+                                    LOADGL          glPolygonOffsetClamp
+
+                                    ; ------------- [Restore stack frame] -----------------------------------
+
+                                    mov             rsp, rbp
+                                    pop             rbp
+
+                                    ; ------------- [Return] ------------------------------------------------
+
+                                    ret
+
+; --------------------------------------------------------------------------------------------------------
+;                                                                                                       --
+; Function pointers                                                                                     --
+;                                                                                                       --
+; --------------------------------------------------------------------------------------------------------
+
+GLAPI                               glClearIndex
+GLAPI                               glClearColor
+GLAPI                               glClear
+GLAPI                               glIndexMask
+GLAPI                               glColorMask
+GLAPI                               glAlphaFunc
+GLAPI                               glBlendFunc
+GLAPI                               glLogicOp
+GLAPI                               glCullFace
+GLAPI                               glFrontFace
+GLAPI                               glPointSize
+GLAPI                               glLineWidth
+GLAPI                               glLineStipple
+GLAPI                               glPolygonMode
+GLAPI                               glPolygonOffset
+GLAPI                               glPolygonStipple
+GLAPI                               glGetPolygonStipple
+GLAPI                               glEdgeFlag
+GLAPI                               glEdgeFlagv
+GLAPI                               glScissor
+GLAPI                               glClipPlane
+GLAPI                               glGetClipPlane
+GLAPI                               glDrawBuffer
+GLAPI                               glReadBuffer
+GLAPI                               glEnable
+GLAPI                               glDisable
+GLAPI                               glIsEnabled
+GLAPI                               glEnableClientState
+GLAPI                               glDisableClientState
+GLAPI                               glGetBooleanv
+GLAPI                               glGetDoublev
+GLAPI                               glGetFloatv
+GLAPI                               glGetIntegerv
+GLAPI                               glPushAttrib
+GLAPI                               glPopAttrib
+GLAPI                               glPushClientAttrib
+GLAPI                               glPopClientAttrib
+GLAPI                               glRenderMode
+GLAPI                               glGetError
+GLAPI                               glGetString
+GLAPI                               glFinish
+GLAPI                               glFlush
+GLAPI                               glHint
+GLAPI                               glClearDepth
+GLAPI                               glDepthFunc
+GLAPI                               glDepthMask
+GLAPI                               glDepthRange
+GLAPI                               glClearAccum
+GLAPI                               glAccum
+GLAPI                               glMatrixMode
+GLAPI                               glOrtho
+GLAPI                               glFrustum
+GLAPI                               glViewport
+GLAPI                               glPushMatrix
+GLAPI                               glPopMatrix
+GLAPI                               glLoadIdentity
+GLAPI                               glLoadMatrixd
+GLAPI                               glLoadMatrixf
+GLAPI                               glMultMatrixd
+GLAPI                               glMultMatrixf
+GLAPI                               glRotated
+GLAPI                               glRotatef
+GLAPI                               glScaled
+GLAPI                               glScalef
+GLAPI                               glTranslated
+GLAPI                               glTranslatef
+GLAPI                               glIsList
+GLAPI                               glDeleteLists
+GLAPI                               glGenLists
+GLAPI                               glNewList
+GLAPI                               glEndList
+GLAPI                               glCallList
+GLAPI                               glCallLists
+GLAPI                               glListBase
+GLAPI                               glBegin
+GLAPI                               glEnd
+GLAPI                               glVertex2d
+GLAPI                               glVertex2f
+GLAPI                               glVertex2i
+GLAPI                               glVertex2s
+GLAPI                               glVertex3d
+GLAPI                               glVertex3f
+GLAPI                               glVertex3i
+GLAPI                               glVertex3s
+GLAPI                               glVertex4d
+GLAPI                               glVertex4f
+GLAPI                               glVertex4i
+GLAPI                               glVertex4s
+GLAPI                               glVertex2dv
+GLAPI                               glVertex2fv
+GLAPI                               glVertex2iv
+GLAPI                               glVertex2sv
+GLAPI                               glVertex3dv
+GLAPI                               glVertex3fv
+GLAPI                               glVertex3iv
+GLAPI                               glVertex3sv
+GLAPI                               glVertex4dv
+GLAPI                               glVertex4fv
+GLAPI                               glVertex4iv
+GLAPI                               glVertex4sv
+GLAPI                               glNormal3b
+GLAPI                               glNormal3d
+GLAPI                               glNormal3f
+GLAPI                               glNormal3i
+GLAPI                               glNormal3s
+GLAPI                               glNormal3bv
+GLAPI                               glNormal3dv
+GLAPI                               glNormal3fv
+GLAPI                               glNormal3iv
+GLAPI                               glNormal3sv
+GLAPI                               glIndexd
+GLAPI                               glIndexf
+GLAPI                               glIndexi
+GLAPI                               glIndexs
+GLAPI                               glIndexub
+GLAPI                               glIndexdv
+GLAPI                               glIndexfv
+GLAPI                               glIndexiv
+GLAPI                               glIndexsv
+GLAPI                               glIndexubv
+GLAPI                               glColor3b
+GLAPI                               glColor3d
+GLAPI                               glColor3f
+GLAPI                               glColor3i
+GLAPI                               glColor3s
+GLAPI                               glColor3ub
+GLAPI                               glColor3ui
+GLAPI                               glColor3us
+GLAPI                               glColor4b
+GLAPI                               glColor4d
+GLAPI                               glColor4f
+GLAPI                               glColor4i
+GLAPI                               glColor4s
+GLAPI                               glColor4ub
+GLAPI                               glColor4ui
+GLAPI                               glColor4us
+GLAPI                               glColor3bv
+GLAPI                               glColor3dv
+GLAPI                               glColor3fv
+GLAPI                               glColor3iv
+GLAPI                               glColor3sv
+GLAPI                               glColor3ubv
+GLAPI                               glColor3uiv
+GLAPI                               glColor3usv
+GLAPI                               glColor4bv
+GLAPI                               glColor4dv
+GLAPI                               glColor4fv
+GLAPI                               glColor4iv
+GLAPI                               glColor4sv
+GLAPI                               glColor4ubv
+GLAPI                               glColor4uiv
+GLAPI                               glColor4usv
+GLAPI                               glTexCoord1d
+GLAPI                               glTexCoord1f
+GLAPI                               glTexCoord1i
+GLAPI                               glTexCoord1s
+GLAPI                               glTexCoord2d
+GLAPI                               glTexCoord2f
+GLAPI                               glTexCoord2i
+GLAPI                               glTexCoord2s
+GLAPI                               glTexCoord3d
+GLAPI                               glTexCoord3f
+GLAPI                               glTexCoord3i
+GLAPI                               glTexCoord3s
+GLAPI                               glTexCoord4d
+GLAPI                               glTexCoord4f
+GLAPI                               glTexCoord4i
+GLAPI                               glTexCoord4s
+GLAPI                               glTexCoord1dv
+GLAPI                               glTexCoord1fv
+GLAPI                               glTexCoord1iv
+GLAPI                               glTexCoord1sv
+GLAPI                               glTexCoord2dv
+GLAPI                               glTexCoord2fv
+GLAPI                               glTexCoord2iv
+GLAPI                               glTexCoord2sv
+GLAPI                               glTexCoord3dv
+GLAPI                               glTexCoord3fv
+GLAPI                               glTexCoord3iv
+GLAPI                               glTexCoord3sv
+GLAPI                               glTexCoord4dv
+GLAPI                               glTexCoord4fv
+GLAPI                               glTexCoord4iv
+GLAPI                               glTexCoord4sv
+GLAPI                               glRasterPos2d
+GLAPI                               glRasterPos2f
+GLAPI                               glRasterPos2i
+GLAPI                               glRasterPos2s
+GLAPI                               glRasterPos3d
+GLAPI                               glRasterPos3f
+GLAPI                               glRasterPos3i
+GLAPI                               glRasterPos3s
+GLAPI                               glRasterPos4d
+GLAPI                               glRasterPos4f
+GLAPI                               glRasterPos4i
+GLAPI                               glRasterPos4s
+GLAPI                               glRasterPos2dv
+GLAPI                               glRasterPos2fv
+GLAPI                               glRasterPos2iv
+GLAPI                               glRasterPos2sv
+GLAPI                               glRasterPos3dv
+GLAPI                               glRasterPos3fv
+GLAPI                               glRasterPos3iv
+GLAPI                               glRasterPos3sv
+GLAPI                               glRasterPos4dv
+GLAPI                               glRasterPos4fv
+GLAPI                               glRasterPos4iv
+GLAPI                               glRasterPos4sv
+GLAPI                               glRectd
+GLAPI                               glRectf
+GLAPI                               glRecti
+GLAPI                               glRects
+GLAPI                               glRectdv
+GLAPI                               glRectfv
+GLAPI                               glRectiv
+GLAPI                               glRectsv
+GLAPI                               glShadeModel
+GLAPI                               glLightf
+GLAPI                               glLighti
+GLAPI                               glLightfv
+GLAPI                               glLightiv
+GLAPI                               glGetLightfv
+GLAPI                               glGetLightiv
+GLAPI                               glLightModelf
+GLAPI                               glLightModeli
+GLAPI                               glLightModelfv
+GLAPI                               glLightModeliv
+GLAPI                               glMaterialf
+GLAPI                               glMateriali
+GLAPI                               glMaterialfv
+GLAPI                               glMaterialiv
+GLAPI                               glGetMaterialfv
+GLAPI                               glGetMaterialiv
+GLAPI                               glColorMaterial
+GLAPI                               glPixelZoom
+GLAPI                               glPixelStoref
+GLAPI                               glPixelStorei
+GLAPI                               glPixelTransferf
+GLAPI                               glPixelTransferi
+GLAPI                               glPixelMapfv
+GLAPI                               glPixelMapuiv
+GLAPI                               glPixelMapusv
+GLAPI                               glGetPixelMapfv
+GLAPI                               glGetPixelMapuiv
+GLAPI                               glGetPixelMapusv
+GLAPI                               glBitmap
+GLAPI                               glReadPixels
+GLAPI                               glDrawPixels
+GLAPI                               glCopyPixels
+GLAPI                               glStencilFunc
+GLAPI                               glStencilMask
+GLAPI                               glStencilOp
+GLAPI                               glClearStencil
+GLAPI                               glTexGend
+GLAPI                               glTexGenf
+GLAPI                               glTexGeni
+GLAPI                               glTexGendv
+GLAPI                               glTexGenfv
+GLAPI                               glTexGeniv
+GLAPI                               glGetTexGendv
+GLAPI                               glGetTexGenfv
+GLAPI                               glGetTexGeniv
+GLAPI                               glTexEnvf
+GLAPI                               glTexEnvi
+GLAPI                               glTexEnvfv
+GLAPI                               glTexEnviv
+GLAPI                               glGetTexEnvfv
+GLAPI                               glGetTexEnviv
+GLAPI                               glTexParameterf
+GLAPI                               glTexParameteri
+GLAPI                               glTexParameterfv
+GLAPI                               glTexParameteriv
+GLAPI                               glGetTexParameterfv
+GLAPI                               glGetTexParameteriv
+GLAPI                               glGetTexLevelParameterfv
+GLAPI                               glGetTexLevelParameteriv
+GLAPI                               glTexImage1D
+GLAPI                               glTexImage2D
+GLAPI                               glGetTexImage
+GLAPI                               glMap1d
+GLAPI                               glMap1f
+GLAPI                               glMap2d
+GLAPI                               glMap2f
+GLAPI                               glGetMapdv
+GLAPI                               glGetMapfv
+GLAPI                               glGetMapiv
+GLAPI                               glEvalCoord1d
+GLAPI                               glEvalCoord1f
+GLAPI                               glEvalCoord1dv
+GLAPI                               glEvalCoord1fv
+GLAPI                               glEvalCoord2d
+GLAPI                               glEvalCoord2f
+GLAPI                               glEvalCoord2dv
+GLAPI                               glEvalCoord2fv
+GLAPI                               glMapGrid1d
+GLAPI                               glMapGrid1f
+GLAPI                               glMapGrid2d
+GLAPI                               glMapGrid2f
+GLAPI                               glEvalPoint1
+GLAPI                               glEvalPoint2
+GLAPI                               glEvalMesh1
+GLAPI                               glEvalMesh2
+GLAPI                               glFogf
+GLAPI                               glFogi
+GLAPI                               glFogfv
+GLAPI                               glFogiv
+GLAPI                               glFeedbackBuffer
+GLAPI                               glPassThrough
+GLAPI                               glSelectBuffer
+GLAPI                               glInitNames
+GLAPI                               glLoadName
+GLAPI                               glPushName
+GLAPI                               glPopName
+GLAPI                               glGenTextures
+GLAPI                               glDeleteTextures
+GLAPI                               glBindTexture
+GLAPI                               glPrioritizeTextures
+GLAPI                               glAreTexturesResident
+GLAPI                               glIsTexture
+GLAPI                               glTexSubImage1D
+GLAPI                               glTexSubImage2D
+GLAPI                               glCopyTexImage1D
+GLAPI                               glCopyTexImage2D
+GLAPI                               glCopyTexSubImage1D
+GLAPI                               glCopyTexSubImage2D
+GLAPI                               glVertexPointer
+GLAPI                               glNormalPointer
+GLAPI                               glColorPointer
+GLAPI                               glIndexPointer
+GLAPI                               glTexCoordPointer
+GLAPI                               glEdgeFlagPointer
+GLAPI                               glGetPointerv
+GLAPI                               glArrayElement
+GLAPI                               glDrawArrays
+GLAPI                               glDrawElements
+GLAPI                               glInterleavedArrays
+GLAPI                               glDrawRangeElements
+GLAPI                               glTexImage3D
+GLAPI                               glTexSubImage3D
+GLAPI                               glCopyTexSubImage3D
+GLAPI                               glActiveTexture
+GLAPI                               glSampleCoverage
+GLAPI                               glCompressedTexImage3D
+GLAPI                               glCompressedTexImage2D
+GLAPI                               glCompressedTexImage1D
+GLAPI                               glCompressedTexSubImage3D
+GLAPI                               glCompressedTexSubImage2D
+GLAPI                               glCompressedTexSubImage1D
+GLAPI                               glGetCompressedTexImage
+GLAPI                               glClientActiveTexture
+GLAPI                               glMultiTexCoord1d
+GLAPI                               glMultiTexCoord1dv
+GLAPI                               glMultiTexCoord1f
+GLAPI                               glMultiTexCoord1fv
+GLAPI                               glMultiTexCoord1i
+GLAPI                               glMultiTexCoord1iv
+GLAPI                               glMultiTexCoord1s
+GLAPI                               glMultiTexCoord1sv
+GLAPI                               glMultiTexCoord2d
+GLAPI                               glMultiTexCoord2dv
+GLAPI                               glMultiTexCoord2f
+GLAPI                               glMultiTexCoord2fv
+GLAPI                               glMultiTexCoord2i
+GLAPI                               glMultiTexCoord2iv
+GLAPI                               glMultiTexCoord2s
+GLAPI                               glMultiTexCoord2sv
+GLAPI                               glMultiTexCoord3d
+GLAPI                               glMultiTexCoord3dv
+GLAPI                               glMultiTexCoord3f
+GLAPI                               glMultiTexCoord3fv
+GLAPI                               glMultiTexCoord3i
+GLAPI                               glMultiTexCoord3iv
+GLAPI                               glMultiTexCoord3s
+GLAPI                               glMultiTexCoord3sv
+GLAPI                               glMultiTexCoord4d
+GLAPI                               glMultiTexCoord4dv
+GLAPI                               glMultiTexCoord4f
+GLAPI                               glMultiTexCoord4fv
+GLAPI                               glMultiTexCoord4i
+GLAPI                               glMultiTexCoord4iv
+GLAPI                               glMultiTexCoord4s
+GLAPI                               glMultiTexCoord4sv
+GLAPI                               glLoadTransposeMatrixf
+GLAPI                               glLoadTransposeMatrixd
+GLAPI                               glMultTransposeMatrixf
+GLAPI                               glMultTransposeMatrixd
+GLAPI                               glBlendFuncSeparate
+GLAPI                               glMultiDrawArrays
+GLAPI                               glMultiDrawElements
+GLAPI                               glPointParameterf
+GLAPI                               glPointParameterfv
+GLAPI                               glPointParameteri
+GLAPI                               glPointParameteriv
+GLAPI                               glFogCoordf
+GLAPI                               glFogCoordfv
+GLAPI                               glFogCoordd
+GLAPI                               glFogCoorddv
+GLAPI                               glFogCoordPointer
+GLAPI                               glSecondaryColor3b
+GLAPI                               glSecondaryColor3bv
+GLAPI                               glSecondaryColor3d
+GLAPI                               glSecondaryColor3dv
+GLAPI                               glSecondaryColor3f
+GLAPI                               glSecondaryColor3fv
+GLAPI                               glSecondaryColor3i
+GLAPI                               glSecondaryColor3iv
+GLAPI                               glSecondaryColor3s
+GLAPI                               glSecondaryColor3sv
+GLAPI                               glSecondaryColor3ub
+GLAPI                               glSecondaryColor3ubv
+GLAPI                               glSecondaryColor3ui
+GLAPI                               glSecondaryColor3uiv
+GLAPI                               glSecondaryColor3us
+GLAPI                               glSecondaryColor3usv
+GLAPI                               glSecondaryColorPointer
+GLAPI                               glWindowPos2d
+GLAPI                               glWindowPos2dv
+GLAPI                               glWindowPos2f
+GLAPI                               glWindowPos2fv
+GLAPI                               glWindowPos2i
+GLAPI                               glWindowPos2iv
+GLAPI                               glWindowPos2s
+GLAPI                               glWindowPos2sv
+GLAPI                               glWindowPos3d
+GLAPI                               glWindowPos3dv
+GLAPI                               glWindowPos3f
+GLAPI                               glWindowPos3fv
+GLAPI                               glWindowPos3i
+GLAPI                               glWindowPos3iv
+GLAPI                               glWindowPos3s
+GLAPI                               glWindowPos3sv
+GLAPI                               glBlendColor
+GLAPI                               glBlendEquation
+GLAPI                               glGenQueries
+GLAPI                               glDeleteQueries
+GLAPI                               glIsQuery
+GLAPI                               glBeginQuery
+GLAPI                               glEndQuery
+GLAPI                               glGetQueryiv
+GLAPI                               glGetQueryObjectiv
+GLAPI                               glGetQueryObjectuiv
+GLAPI                               glBindBuffer
+GLAPI                               glDeleteBuffers
+GLAPI                               glGenBuffers
+GLAPI                               glIsBuffer
+GLAPI                               glBufferData
+GLAPI                               glBufferSubData
+GLAPI                               glGetBufferSubData
+GLAPI                               glMapBuffer
+GLAPI                               glUnmapBuffer
+GLAPI                               glGetBufferParameteriv
+GLAPI                               glGetBufferPointerv
+GLAPI                               glBlendEquationSeparate
+GLAPI                               glDrawBuffers
+GLAPI                               glStencilOpSeparate
+GLAPI                               glStencilFuncSeparate
+GLAPI                               glStencilMaskSeparate
+GLAPI                               glAttachShader
+GLAPI                               glBindAttribLocation
+GLAPI                               glCompileShader
+GLAPI                               glCreateProgram
+GLAPI                               glCreateShader
+GLAPI                               glDeleteProgram
+GLAPI                               glDeleteShader
+GLAPI                               glDetachShader
+GLAPI                               glDisableVertexAttribArray
+GLAPI                               glEnableVertexAttribArray
+GLAPI                               glGetActiveAttrib
+GLAPI                               glGetActiveUniform
+GLAPI                               glGetAttachedShaders
+GLAPI                               glGetAttribLocation
+GLAPI                               glGetProgramiv
+GLAPI                               glGetProgramInfoLog
+GLAPI                               glGetShaderiv
+GLAPI                               glGetShaderInfoLog
+GLAPI                               glGetShaderSource
+GLAPI                               glGetUniformLocation
+GLAPI                               glGetUniformfv
+GLAPI                               glGetUniformiv
+GLAPI                               glGetVertexAttribdv
+GLAPI                               glGetVertexAttribfv
+GLAPI                               glGetVertexAttribiv
+GLAPI                               glGetVertexAttribPointerv
+GLAPI                               glIsProgram
+GLAPI                               glIsShader
+GLAPI                               glLinkProgram
+GLAPI                               glShaderSource
+GLAPI                               glUseProgram
+GLAPI                               glUniform1f
+GLAPI                               glUniform2f
+GLAPI                               glUniform3f
+GLAPI                               glUniform4f
+GLAPI                               glUniform1i
+GLAPI                               glUniform2i
+GLAPI                               glUniform3i
+GLAPI                               glUniform4i
+GLAPI                               glUniform1fv
+GLAPI                               glUniform2fv
+GLAPI                               glUniform3fv
+GLAPI                               glUniform4fv
+GLAPI                               glUniform1iv
+GLAPI                               glUniform2iv
+GLAPI                               glUniform3iv
+GLAPI                               glUniform4iv
+GLAPI                               glUniformMatrix2fv
+GLAPI                               glUniformMatrix3fv
+GLAPI                               glUniformMatrix4fv
+GLAPI                               glValidateProgram
+GLAPI                               glVertexAttrib1d
+GLAPI                               glVertexAttrib1dv
+GLAPI                               glVertexAttrib1f
+GLAPI                               glVertexAttrib1fv
+GLAPI                               glVertexAttrib1s
+GLAPI                               glVertexAttrib1sv
+GLAPI                               glVertexAttrib2d
+GLAPI                               glVertexAttrib2dv
+GLAPI                               glVertexAttrib2f
+GLAPI                               glVertexAttrib2fv
+GLAPI                               glVertexAttrib2s
+GLAPI                               glVertexAttrib2sv
+GLAPI                               glVertexAttrib3d
+GLAPI                               glVertexAttrib3dv
+GLAPI                               glVertexAttrib3f
+GLAPI                               glVertexAttrib3fv
+GLAPI                               glVertexAttrib3s
+GLAPI                               glVertexAttrib3sv
+GLAPI                               glVertexAttrib4Nbv
+GLAPI                               glVertexAttrib4Niv
+GLAPI                               glVertexAttrib4Nsv
+GLAPI                               glVertexAttrib4Nub
+GLAPI                               glVertexAttrib4Nubv
+GLAPI                               glVertexAttrib4Nuiv
+GLAPI                               glVertexAttrib4Nusv
+GLAPI                               glVertexAttrib4bv
+GLAPI                               glVertexAttrib4d
+GLAPI                               glVertexAttrib4dv
+GLAPI                               glVertexAttrib4f
+GLAPI                               glVertexAttrib4fv
+GLAPI                               glVertexAttrib4iv
+GLAPI                               glVertexAttrib4s
+GLAPI                               glVertexAttrib4sv
+GLAPI                               glVertexAttrib4ubv
+GLAPI                               glVertexAttrib4uiv
+GLAPI                               glVertexAttrib4usv
+GLAPI                               glVertexAttribPointer
+GLAPI                               glUniformMatrix2x3fv
+GLAPI                               glUniformMatrix3x2fv
+GLAPI                               glUniformMatrix2x4fv
+GLAPI                               glUniformMatrix4x2fv
+GLAPI                               glUniformMatrix3x4fv
+GLAPI                               glUniformMatrix4x3fv
+GLAPI                               glColorMaski
+GLAPI                               glGetBooleani_v
+GLAPI                               glGetIntegeri_v
+GLAPI                               glEnablei
+GLAPI                               glDisablei
+GLAPI                               glIsEnabledi
+GLAPI                               glBeginTransformFeedback
+GLAPI                               glEndTransformFeedback
+GLAPI                               glBindBufferRange
+GLAPI                               glBindBufferBase
+GLAPI                               glTransformFeedbackVaryings
+GLAPI                               glGetTransformFeedbackVarying
+GLAPI                               glClampColor
+GLAPI                               glBeginConditionalRender
+GLAPI                               glEndConditionalRender
+GLAPI                               glVertexAttribIPointer
+GLAPI                               glGetVertexAttribIiv
+GLAPI                               glGetVertexAttribIuiv
+GLAPI                               glVertexAttribI1i
+GLAPI                               glVertexAttribI2i
+GLAPI                               glVertexAttribI3i
+GLAPI                               glVertexAttribI4i
+GLAPI                               glVertexAttribI1ui
+GLAPI                               glVertexAttribI2ui
+GLAPI                               glVertexAttribI3ui
+GLAPI                               glVertexAttribI4ui
+GLAPI                               glVertexAttribI1iv
+GLAPI                               glVertexAttribI2iv
+GLAPI                               glVertexAttribI3iv
+GLAPI                               glVertexAttribI4iv
+GLAPI                               glVertexAttribI1uiv
+GLAPI                               glVertexAttribI2uiv
+GLAPI                               glVertexAttribI3uiv
+GLAPI                               glVertexAttribI4uiv
+GLAPI                               glVertexAttribI4bv
+GLAPI                               glVertexAttribI4sv
+GLAPI                               glVertexAttribI4ubv
+GLAPI                               glVertexAttribI4usv
+GLAPI                               glGetUniformuiv
+GLAPI                               glBindFragDataLocation
+GLAPI                               glGetFragDataLocation
+GLAPI                               glUniform1ui
+GLAPI                               glUniform2ui
+GLAPI                               glUniform3ui
+GLAPI                               glUniform4ui
+GLAPI                               glUniform1uiv
+GLAPI                               glUniform2uiv
+GLAPI                               glUniform3uiv
+GLAPI                               glUniform4uiv
+GLAPI                               glTexParameterIiv
+GLAPI                               glTexParameterIuiv
+GLAPI                               glGetTexParameterIiv
+GLAPI                               glGetTexParameterIuiv
+GLAPI                               glClearBufferiv
+GLAPI                               glClearBufferuiv
+GLAPI                               glClearBufferfv
+GLAPI                               glClearBufferfi
+GLAPI                               glGetStringi
+GLAPI                               glIsRenderbuffer
+GLAPI                               glBindRenderbuffer
+GLAPI                               glDeleteRenderbuffers
+GLAPI                               glGenRenderbuffers
+GLAPI                               glRenderbufferStorage
+GLAPI                               glGetRenderbufferParameteriv
+GLAPI                               glIsFramebuffer
+GLAPI                               glBindFramebuffer
+GLAPI                               glDeleteFramebuffers
+GLAPI                               glGenFramebuffers
+GLAPI                               glCheckFramebufferStatus
+GLAPI                               glFramebufferTexture1D
+GLAPI                               glFramebufferTexture2D
+GLAPI                               glFramebufferTexture3D
+GLAPI                               glFramebufferRenderbuffer
+GLAPI                               glGetFramebufferAttachmentParameteriv
+GLAPI                               glGenerateMipmap
+GLAPI                               glBlitFramebuffer
+GLAPI                               glRenderbufferStorageMultisample
+GLAPI                               glFramebufferTextureLayer
+GLAPI                               glMapBufferRange
+GLAPI                               glFlushMappedBufferRange
+GLAPI                               glBindVertexArray
+GLAPI                               glDeleteVertexArrays
+GLAPI                               glGenVertexArrays
+GLAPI                               glIsVertexArray
+GLAPI                               glDrawArraysInstanced
+GLAPI                               glDrawElementsInstanced
+GLAPI                               glTexBuffer
+GLAPI                               glPrimitiveRestartIndex
+GLAPI                               glCopyBufferSubData
+GLAPI                               glGetUniformIndices
+GLAPI                               glGetActiveUniformsiv
+GLAPI                               glGetActiveUniformName
+GLAPI                               glGetUniformBlockIndex
+GLAPI                               glGetActiveUniformBlockiv
+GLAPI                               glGetActiveUniformBlockName
+GLAPI                               glUniformBlockBinding
+GLAPI                               glDrawElementsBaseVertex
+GLAPI                               glDrawRangeElementsBaseVertex
+GLAPI                               glDrawElementsInstancedBaseVertex
+GLAPI                               glMultiDrawElementsBaseVertex
+GLAPI                               glProvokingVertex
+GLAPI                               glFenceSync
+GLAPI                               glIsSync
+GLAPI                               glDeleteSync
+GLAPI                               glClientWaitSync
+GLAPI                               glWaitSync
+GLAPI                               glGetInteger64v
+GLAPI                               glGetSynciv
+GLAPI                               glGetInteger64i_v
+GLAPI                               glGetBufferParameteri64v
+GLAPI                               glFramebufferTexture
+GLAPI                               glTexImage2DMultisample
+GLAPI                               glTexImage3DMultisample
+GLAPI                               glGetMultisamplefv
+GLAPI                               glSampleMaski
+GLAPI                               glBindFragDataLocationIndexed
+GLAPI                               glGetFragDataIndex
+GLAPI                               glGenSamplers
+GLAPI                               glDeleteSamplers
+GLAPI                               glIsSampler
+GLAPI                               glBindSampler
+GLAPI                               glSamplerParameteri
+GLAPI                               glSamplerParameteriv
+GLAPI                               glSamplerParameterf
+GLAPI                               glSamplerParameterfv
+GLAPI                               glSamplerParameterIiv
+GLAPI                               glSamplerParameterIuiv
+GLAPI                               glGetSamplerParameteriv
+GLAPI                               glGetSamplerParameterIiv
+GLAPI                               glGetSamplerParameterfv
+GLAPI                               glGetSamplerParameterIuiv
+GLAPI                               glQueryCounter
+GLAPI                               glGetQueryObjecti64v
+GLAPI                               glGetQueryObjectui64v
+GLAPI                               glVertexAttribDivisor
+GLAPI                               glVertexAttribP1ui
+GLAPI                               glVertexAttribP1uiv
+GLAPI                               glVertexAttribP2ui
+GLAPI                               glVertexAttribP2uiv
+GLAPI                               glVertexAttribP3ui
+GLAPI                               glVertexAttribP3uiv
+GLAPI                               glVertexAttribP4ui
+GLAPI                               glVertexAttribP4uiv
+GLAPI                               glVertexP2ui
+GLAPI                               glVertexP2uiv
+GLAPI                               glVertexP3ui
+GLAPI                               glVertexP3uiv
+GLAPI                               glVertexP4ui
+GLAPI                               glVertexP4uiv
+GLAPI                               glTexCoordP1ui
+GLAPI                               glTexCoordP1uiv
+GLAPI                               glTexCoordP2ui
+GLAPI                               glTexCoordP2uiv
+GLAPI                               glTexCoordP3ui
+GLAPI                               glTexCoordP3uiv
+GLAPI                               glTexCoordP4ui
+GLAPI                               glTexCoordP4uiv
+GLAPI                               glMultiTexCoordP1ui
+GLAPI                               glMultiTexCoordP1uiv
+GLAPI                               glMultiTexCoordP2ui
+GLAPI                               glMultiTexCoordP2uiv
+GLAPI                               glMultiTexCoordP3ui
+GLAPI                               glMultiTexCoordP3uiv
+GLAPI                               glMultiTexCoordP4ui
+GLAPI                               glMultiTexCoordP4uiv
+GLAPI                               glNormalP3ui
+GLAPI                               glNormalP3uiv
+GLAPI                               glColorP3ui
+GLAPI                               glColorP3uiv
+GLAPI                               glColorP4ui
+GLAPI                               glColorP4uiv
+GLAPI                               glSecondaryColorP3ui
+GLAPI                               glSecondaryColorP3uiv
+GLAPI                               glMinSampleShading
+GLAPI                               glBlendEquationi
+GLAPI                               glBlendEquationSeparatei
+GLAPI                               glBlendFunci
+GLAPI                               glBlendFuncSeparatei
+GLAPI                               glDrawArraysIndirect
+GLAPI                               glDrawElementsIndirect
+GLAPI                               glUniform1d
+GLAPI                               glUniform2d
+GLAPI                               glUniform3d
+GLAPI                               glUniform4d
+GLAPI                               glUniform1dv
+GLAPI                               glUniform2dv
+GLAPI                               glUniform3dv
+GLAPI                               glUniform4dv
+GLAPI                               glUniformMatrix2dv
+GLAPI                               glUniformMatrix3dv
+GLAPI                               glUniformMatrix4dv
+GLAPI                               glUniformMatrix2x3dv
+GLAPI                               glUniformMatrix2x4dv
+GLAPI                               glUniformMatrix3x2dv
+GLAPI                               glUniformMatrix3x4dv
+GLAPI                               glUniformMatrix4x2dv
+GLAPI                               glUniformMatrix4x3dv
+GLAPI                               glGetUniformdv
+GLAPI                               glGetSubroutineUniformLocation
+GLAPI                               glGetSubroutineIndex
+GLAPI                               glGetActiveSubroutineUniformiv
+GLAPI                               glGetActiveSubroutineUniformName
+GLAPI                               glGetActiveSubroutineName
+GLAPI                               glUniformSubroutinesuiv
+GLAPI                               glGetUniformSubroutineuiv
+GLAPI                               glGetProgramStageiv
+GLAPI                               glPatchParameteri
+GLAPI                               glPatchParameterfv
+GLAPI                               glBindTransformFeedback
+GLAPI                               glDeleteTransformFeedbacks
+GLAPI                               glGenTransformFeedbacks
+GLAPI                               glIsTransformFeedback
+GLAPI                               glPauseTransformFeedback
+GLAPI                               glResumeTransformFeedback
+GLAPI                               glDrawTransformFeedback
+GLAPI                               glDrawTransformFeedbackStream
+GLAPI                               glBeginQueryIndexed
+GLAPI                               glEndQueryIndexed
+GLAPI                               glGetQueryIndexediv
+GLAPI                               glReleaseShaderCompiler
+GLAPI                               glShaderBinary
+GLAPI                               glGetShaderPrecisionFormat
+GLAPI                               glDepthRangef
+GLAPI                               glClearDepthf
+GLAPI                               glGetProgramBinary
+GLAPI                               glProgramBinary
+GLAPI                               glProgramParameteri
+GLAPI                               glUseProgramStages
+GLAPI                               glActiveShaderProgram
+GLAPI                               glCreateShaderProgramv
+GLAPI                               glBindProgramPipeline
+GLAPI                               glDeleteProgramPipelines
+GLAPI                               glGenProgramPipelines
+GLAPI                               glIsProgramPipeline
+GLAPI                               glGetProgramPipelineiv
+GLAPI                               glProgramUniform1i
+GLAPI                               glProgramUniform1iv
+GLAPI                               glProgramUniform1f
+GLAPI                               glProgramUniform1fv
+GLAPI                               glProgramUniform1d
+GLAPI                               glProgramUniform1dv
+GLAPI                               glProgramUniform1ui
+GLAPI                               glProgramUniform1uiv
+GLAPI                               glProgramUniform2i
+GLAPI                               glProgramUniform2iv
+GLAPI                               glProgramUniform2f
+GLAPI                               glProgramUniform2fv
+GLAPI                               glProgramUniform2d
+GLAPI                               glProgramUniform2dv
+GLAPI                               glProgramUniform2ui
+GLAPI                               glProgramUniform2uiv
+GLAPI                               glProgramUniform3i
+GLAPI                               glProgramUniform3iv
+GLAPI                               glProgramUniform3f
+GLAPI                               glProgramUniform3fv
+GLAPI                               glProgramUniform3d
+GLAPI                               glProgramUniform3dv
+GLAPI                               glProgramUniform3ui
+GLAPI                               glProgramUniform3uiv
+GLAPI                               glProgramUniform4i
+GLAPI                               glProgramUniform4iv
+GLAPI                               glProgramUniform4f
+GLAPI                               glProgramUniform4fv
+GLAPI                               glProgramUniform4d
+GLAPI                               glProgramUniform4dv
+GLAPI                               glProgramUniform4ui
+GLAPI                               glProgramUniform4uiv
+GLAPI                               glProgramUniformMatrix2fv
+GLAPI                               glProgramUniformMatrix3fv
+GLAPI                               glProgramUniformMatrix4fv
+GLAPI                               glProgramUniformMatrix2dv
+GLAPI                               glProgramUniformMatrix3dv
+GLAPI                               glProgramUniformMatrix4dv
+GLAPI                               glProgramUniformMatrix2x3fv
+GLAPI                               glProgramUniformMatrix3x2fv
+GLAPI                               glProgramUniformMatrix2x4fv
+GLAPI                               glProgramUniformMatrix4x2fv
+GLAPI                               glProgramUniformMatrix3x4fv
+GLAPI                               glProgramUniformMatrix4x3fv
+GLAPI                               glProgramUniformMatrix2x3dv
+GLAPI                               glProgramUniformMatrix3x2dv
+GLAPI                               glProgramUniformMatrix2x4dv
+GLAPI                               glProgramUniformMatrix4x2dv
+GLAPI                               glProgramUniformMatrix3x4dv
+GLAPI                               glProgramUniformMatrix4x3dv
+GLAPI                               glValidateProgramPipeline
+GLAPI                               glGetProgramPipelineInfoLog
+GLAPI                               glVertexAttribL1d
+GLAPI                               glVertexAttribL2d
+GLAPI                               glVertexAttribL3d
+GLAPI                               glVertexAttribL4d
+GLAPI                               glVertexAttribL1dv
+GLAPI                               glVertexAttribL2dv
+GLAPI                               glVertexAttribL3dv
+GLAPI                               glVertexAttribL4dv
+GLAPI                               glVertexAttribLPointer
+GLAPI                               glGetVertexAttribLdv
+GLAPI                               glViewportArrayv
+GLAPI                               glViewportIndexedf
+GLAPI                               glViewportIndexedfv
+GLAPI                               glScissorArrayv
+GLAPI                               glScissorIndexed
+GLAPI                               glScissorIndexedv
+GLAPI                               glDepthRangeArrayv
+GLAPI                               glDepthRangeIndexed
+GLAPI                               glGetFloati_v
+GLAPI                               glGetDoublei_v
+GLAPI                               glDrawArraysInstancedBaseInstance
+GLAPI                               glDrawElementsInstancedBaseInstance
+GLAPI                               glDrawElementsInstancedBaseVertexBaseInstance
+GLAPI                               glGetInternalformativ
+GLAPI                               glGetActiveAtomicCounterBufferiv
+GLAPI                               glBindImageTexture
+GLAPI                               glMemoryBarrier
+GLAPI                               glTexStorage1D
+GLAPI                               glTexStorage2D
+GLAPI                               glTexStorage3D
+GLAPI                               glDrawTransformFeedbackInstanced
+GLAPI                               glDrawTransformFeedbackStreamInstanced
+GLAPI                               glClearBufferData
+GLAPI                               glClearBufferSubData
+GLAPI                               glDispatchCompute
+GLAPI                               glDispatchComputeIndirect
+GLAPI                               glCopyImageSubData
+GLAPI                               glFramebufferParameteri
+GLAPI                               glGetFramebufferParameteriv
+GLAPI                               glGetInternalformati64v
+GLAPI                               glInvalidateTexSubImage
+GLAPI                               glInvalidateTexImage
+GLAPI                               glInvalidateBufferSubData
+GLAPI                               glInvalidateBufferData
+GLAPI                               glInvalidateFramebuffer
+GLAPI                               glInvalidateSubFramebuffer
+GLAPI                               glMultiDrawArraysIndirect
+GLAPI                               glMultiDrawElementsIndirect
+GLAPI                               glGetProgramInterfaceiv
+GLAPI                               glGetProgramResourceIndex
+GLAPI                               glGetProgramResourceName
+GLAPI                               glGetProgramResourceiv
+GLAPI                               glGetProgramResourceLocation
+GLAPI                               glGetProgramResourceLocationIndex
+GLAPI                               glShaderStorageBlockBinding
+GLAPI                               glTexBufferRange
+GLAPI                               glTexStorage2DMultisample
+GLAPI                               glTexStorage3DMultisample
+GLAPI                               glTextureView
+GLAPI                               glBindVertexBuffer
+GLAPI                               glVertexAttribFormat
+GLAPI                               glVertexAttribIFormat
+GLAPI                               glVertexAttribLFormat
+GLAPI                               glVertexAttribBinding
+GLAPI                               glVertexBindingDivisor
+GLAPI                               glDebugMessageControl
+GLAPI                               glDebugMessageInsert
+GLAPI                               glDebugMessageCallback
+GLAPI                               glGetDebugMessageLog
+GLAPI                               glPushDebugGroup
+GLAPI                               glPopDebugGroup
+GLAPI                               glObjectLabel
+GLAPI                               glGetObjectLabel
+GLAPI                               glObjectPtrLabel
+GLAPI                               glGetObjectPtrLabel
+GLAPI                               glBufferStorage
+GLAPI                               glClearTexImage
+GLAPI                               glClearTexSubImage
+GLAPI                               glBindBuffersBase
+GLAPI                               glBindBuffersRange
+GLAPI                               glBindTextures
+GLAPI                               glBindSamplers
+GLAPI                               glBindImageTextures
+GLAPI                               glBindVertexBuffers
+GLAPI                               glClipControl
+GLAPI                               glCreateTransformFeedbacks
+GLAPI                               glTransformFeedbackBufferBase
+GLAPI                               glTransformFeedbackBufferRange
+GLAPI                               glGetTransformFeedbackiv
+GLAPI                               glGetTransformFeedbacki_v
+GLAPI                               glGetTransformFeedbacki64_v
+GLAPI                               glCreateBuffers
+GLAPI                               glNamedBufferStorage
+GLAPI                               glNamedBufferData
+GLAPI                               glNamedBufferSubData
+GLAPI                               glCopyNamedBufferSubData
+GLAPI                               glClearNamedBufferData
+GLAPI                               glClearNamedBufferSubData
+GLAPI                               glMapNamedBuffer
+GLAPI                               glMapNamedBufferRange
+GLAPI                               glUnmapNamedBuffer
+GLAPI                               glFlushMappedNamedBufferRange
+GLAPI                               glGetNamedBufferParameteriv
+GLAPI                               glGetNamedBufferParameteri64v
+GLAPI                               glGetNamedBufferPointerv
+GLAPI                               glGetNamedBufferSubData
+GLAPI                               glCreateFramebuffers
+GLAPI                               glNamedFramebufferRenderbuffer
+GLAPI                               glNamedFramebufferParameteri
+GLAPI                               glNamedFramebufferTexture
+GLAPI                               glNamedFramebufferTextureLayer
+GLAPI                               glNamedFramebufferDrawBuffer
+GLAPI                               glNamedFramebufferDrawBuffers
+GLAPI                               glNamedFramebufferReadBuffer
+GLAPI                               glInvalidateNamedFramebufferData
+GLAPI                               glInvalidateNamedFramebufferSubData
+GLAPI                               glClearNamedFramebufferiv
+GLAPI                               glClearNamedFramebufferuiv
+GLAPI                               glClearNamedFramebufferfv
+GLAPI                               glClearNamedFramebufferfi
+GLAPI                               glBlitNamedFramebuffer
+GLAPI                               glCheckNamedFramebufferStatus
+GLAPI                               glGetNamedFramebufferParameteriv
+GLAPI                               glGetNamedFramebufferAttachmentParameteriv
+GLAPI                               glCreateRenderbuffers
+GLAPI                               glNamedRenderbufferStorage
+GLAPI                               glNamedRenderbufferStorageMultisample
+GLAPI                               glGetNamedRenderbufferParameteriv
+GLAPI                               glCreateTextures
+GLAPI                               glTextureBuffer
+GLAPI                               glTextureBufferRange
+GLAPI                               glTextureStorage1D
+GLAPI                               glTextureStorage2D
+GLAPI                               glTextureStorage3D
+GLAPI                               glTextureStorage2DMultisample
+GLAPI                               glTextureStorage3DMultisample
+GLAPI                               glTextureSubImage1D
+GLAPI                               glTextureSubImage2D
+GLAPI                               glTextureSubImage3D
+GLAPI                               glCompressedTextureSubImage1D
+GLAPI                               glCompressedTextureSubImage2D
+GLAPI                               glCompressedTextureSubImage3D
+GLAPI                               glCopyTextureSubImage1D
+GLAPI                               glCopyTextureSubImage2D
+GLAPI                               glCopyTextureSubImage3D
+GLAPI                               glTextureParameterf
+GLAPI                               glTextureParameterfv
+GLAPI                               glTextureParameteri
+GLAPI                               glTextureParameterIiv
+GLAPI                               glTextureParameterIuiv
+GLAPI                               glTextureParameteriv
+GLAPI                               glGenerateTextureMipmap
+GLAPI                               glBindTextureUnit
+GLAPI                               glGetTextureImage
+GLAPI                               glGetCompressedTextureImage
+GLAPI                               glGetTextureLevelParameterfv
+GLAPI                               glGetTextureLevelParameteriv
+GLAPI                               glGetTextureParameterfv
+GLAPI                               glGetTextureParameterIiv
+GLAPI                               glGetTextureParameterIuiv
+GLAPI                               glGetTextureParameteriv
+GLAPI                               glCreateVertexArrays
+GLAPI                               glDisableVertexArrayAttrib
+GLAPI                               glEnableVertexArrayAttrib
+GLAPI                               glVertexArrayElementBuffer
+GLAPI                               glVertexArrayVertexBuffer
+GLAPI                               glVertexArrayVertexBuffers
+GLAPI                               glVertexArrayAttribBinding
+GLAPI                               glVertexArrayAttribFormat
+GLAPI                               glVertexArrayAttribIFormat
+GLAPI                               glVertexArrayAttribLFormat
+GLAPI                               glVertexArrayBindingDivisor
+GLAPI                               glGetVertexArrayiv
+GLAPI                               glGetVertexArrayIndexediv
+GLAPI                               glGetVertexArrayIndexed64iv
+GLAPI                               glCreateSamplers
+GLAPI                               glCreateProgramPipelines
+GLAPI                               glCreateQueries
+GLAPI                               glGetQueryBufferObjecti64v
+GLAPI                               glGetQueryBufferObjectiv
+GLAPI                               glGetQueryBufferObjectui64v
+GLAPI                               glGetQueryBufferObjectuiv
+GLAPI                               glMemoryBarrierByRegion
+GLAPI                               glGetTextureSubImage
+GLAPI                               glGetCompressedTextureSubImage
+GLAPI                               glGetGraphicsResetStatus
+GLAPI                               glGetnCompressedTexImage
+GLAPI                               glGetnTexImage
+GLAPI                               glGetnUniformdv
+GLAPI                               glGetnUniformfv
+GLAPI                               glGetnUniformiv
+GLAPI                               glGetnUniformuiv
+GLAPI                               glReadnPixels
+GLAPI                               glGetnMapdv
+GLAPI                               glGetnMapfv
+GLAPI                               glGetnMapiv
+GLAPI                               glGetnPixelMapfv
+GLAPI                               glGetnPixelMapuiv
+GLAPI                               glGetnPixelMapusv
+GLAPI                               glGetnPolygonStipple
+GLAPI                               glGetnColorTable
+GLAPI                               glGetnConvolutionFilter
+GLAPI                               glGetnSeparableFilter
+GLAPI                               glGetnHistogram
+GLAPI                               glGetnMinmax
+GLAPI                               glTextureBarrier
+GLAPI                               glSpecializeShader
+GLAPI                               glMultiDrawArraysIndirectCount
+GLAPI                               glMultiDrawElementsIndirectCount
+GLAPI                               glPolygonOffsetClamp
