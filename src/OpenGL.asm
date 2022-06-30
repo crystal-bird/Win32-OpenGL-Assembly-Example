@@ -110,7 +110,7 @@ function                            LoadGLProc
                                     mov             rcx, [rbp + 16]
                                     call            wglGetProcAddress
 
-.Return:\
+.Return:
 
                                     ; ------------- [Restore stack frame] -----------------------------------
 
